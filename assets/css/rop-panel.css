@@ -1245,3 +1245,38 @@ textarea.rop-form-control {
         min-height: 120px;
     }
 }
+
+/* ===== BETTER MESSAGES INTEGRATION ===== */
+.rop-messages-container {
+    background: #ffffff;
+    border-radius: var(--radius-large);
+    box-shadow: var(--shadow-light);
+    border: 1px solid var(--border-color);
+    margin: 20px 0;
+    overflow: hidden;
+}
+
+.rop-messages-container .bp-better-messages-wrap {
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+}
+
+.rop-messages-container .bp-better-messages-wrap * {
+    box-sizing: border-box;
+}
+
+/* Dostosuj kolory Better Messages do naszego motywu */
+.rop-messages-container .bp-better-messages-wrap .bp-messages-wrap {
+    background: transparent !important;
+}
+
+.rop-messages-container .bp-better-messages-wrap .bp-messages-wrap .messages-header {
+    background: var(--bg-light) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+.rop-messages-container .bp-better-messages-wrap .bp-messages-wrap .messages-header h3 {
+    color: var(--text-primary) !important;
+}
