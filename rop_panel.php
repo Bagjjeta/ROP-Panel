@@ -4,7 +4,7 @@
  * Plugin URI: https://yourwebsite.com
  * Description: Kompletny panel członka z funkcjonalnościami forum popup i edycji profilu firmowego. Kompatybilny z bbPress i Ultimate Members.
  * Version: 2.1.0
- * Author: Twoje Imię
+ * Author: git
  * Text Domain: rop_panel
  * Domain Path: /languages
  * Requires at least: 5.0
@@ -68,6 +68,12 @@ class ROP_Panel_Main {
             new ROP_Panel_Forum_Popup();
             error_log('ROP DEBUG: ROP_Panel_Forum_Popup initialized');
         }
+        
+        // Inicjalizacja komponentu wiadomości
+        if (class_exists('ROP_Panel_Messages')) {
+            new ROP_Panel_Messages();
+            error_log('ROP DEBUG: ROP_Panel_Messages initialized');
+        }
     }
     
     public function load_dependencies() {
@@ -80,6 +86,7 @@ class ROP_Panel_Main {
             'includes/class-rop-panel-forum-popup.php',
             'includes/class-rop-panel-forum-manager.php',
             'includes/class-rop-panel-delete-manager.php',
+            'includes/class-rop-panel-messages.php', // Dodany nowy plik dla funkcjonalności wiadomości
             'includes/ajax-handlers.php'
         );
         
@@ -114,6 +121,12 @@ class ROP_Panel_Main {
             wp_mkdir_p($assets_dir . '/js');
         }
         
+        // Sprawdź czy folder templates istnieje
+        $templates_dir = ROP_PANEL_PLUGIN_DIR . 'templates';
+        if (!file_exists($templates_dir)) {
+            wp_mkdir_p($templates_dir);
+        }
+        
         // Utwórz folder dla uploadu logo firm
         $upload_dir = wp_upload_dir();
         $rop_upload_dir = $upload_dir['basedir'] . '/rop_panel/company_logos';
@@ -130,6 +143,14 @@ class ROP_Panel_Main {
         flush_rewrite_rules();
     }
 }
+
+// Filtr do dodawania zmiennych JavaScript do skryptów wtyczki
+function rop_panel_add_script_vars($script_vars = array()) {
+    $script_vars['ajax_url'] = admin_url('admin-ajax.php');
+    $script_vars['nonce'] = wp_create_nonce('rop_panel_nonce');
+    return $script_vars;
+}
+add_filter('rop_panel_script_vars', 'rop_panel_add_script_vars');
 
 // Uruchom wtyczkę
 error_log('ROP DEBUG: About to initialize ROP_Panel_Main');
