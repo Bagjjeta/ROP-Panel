@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Plugin Name: ROP Panel
  * Plugin URI: https://yourwebsite.com
@@ -27,52 +28,61 @@ define('ROP_PANEL_PLUGIN_URL', plugin_dir_url(__FILE__));
 error_log('ROP DEBUG: Constants defined');
 
 // Główna klasa wtyczki
-class ROP_Panel_Main {
-    
-    public function __construct() {
+class ROP_Panel_Main
+{
+
+    public function __construct()
+    {
         error_log('ROP DEBUG: ROP_Panel_Main constructor');
         add_action('init', array($this, 'init'));
         add_action('plugins_loaded', array($this, 'load_textdomain'));
         register_activation_hook(__FILE__, array($this, 'activate'));
         register_deactivation_hook(__FILE__, array($this, 'deactivate'));
     }
-    
-    public function init() {
+
+    public function init()
+    {
         error_log('ROP DEBUG: init() called');
         // Załaduj pliki
         $this->load_dependencies();
-        
+
         // Inicjalizuj komponenty tylko jeśli pliki zostały załadowane
         if (class_exists('ROP_Panel_Core')) {
             new ROP_Panel_Core();
             error_log('ROP DEBUG: ROP_Panel_Core initialized');
         }
-        
+
         if (class_exists('ROP_Panel_Profile_Editor')) {
             new ROP_Panel_Profile_Editor();
             error_log('ROP DEBUG: ROP_Panel_Profile_Editor initialized');
         }
-        
+
         if (class_exists('ROP_Panel_Forum_Manager')) {
             new ROP_Panel_Forum_Manager();
             error_log('ROP DEBUG: ROP_Panel_Forum_Manager initialized');
         }
-        
+
         if (class_exists('ROP_Panel_Delete_Manager')) {
             new ROP_Panel_Delete_Manager();
             error_log('ROP DEBUG: ROP_Panel_Delete_Manager initialized');
         }
-        
+
         // Forum popup tylko jeśli bbPress jest aktywny
         if (function_exists('bbp_get_version') && class_exists('ROP_Panel_Forum_Popup')) {
             new ROP_Panel_Forum_Popup();
             error_log('ROP DEBUG: ROP_Panel_Forum_Popup initialized');
         }
+
+        if (class_exists('ROP_Panel_Messages_Manager')) {
+            new ROP_Panel_Messages_Manager();
+            error_log('ROP DEBUG: ROP_Panel_Messages_Manager initialized');
+        }
     }
-    
-    public function load_dependencies() {
+
+    public function load_dependencies()
+    {
         error_log('ROP DEBUG: load_dependencies() called');
-        
+
         // Lista plików do załadowania
         $files = array(
             'includes/class-rop-panel-core.php',
@@ -80,9 +90,10 @@ class ROP_Panel_Main {
             'includes/class-rop-panel-forum-popup.php',
             'includes/class-rop-panel-forum-manager.php',
             'includes/class-rop-panel-delete-manager.php',
+            'includes/class-rop-panel-messages-manager.php',
             'includes/ajax-handlers.php'
         );
-        
+
         foreach ($files as $file) {
             $file_path = ROP_PANEL_PLUGIN_DIR . $file;
             if (file_exists($file_path)) {
@@ -93,19 +104,21 @@ class ROP_Panel_Main {
             }
         }
     }
-    
-    public function load_textdomain() {
+
+    public function load_textdomain()
+    {
         load_plugin_textdomain('rop_panel', false, dirname(plugin_basename(__FILE__)) . '/languages/');
     }
-    
-    public function activate() {
+
+    public function activate()
+    {
         error_log('ROP DEBUG: Plugin activated');
         // Sprawdź czy folder includes istnieje
         $includes_dir = ROP_PANEL_PLUGIN_DIR . 'includes';
         if (!file_exists($includes_dir)) {
             wp_mkdir_p($includes_dir);
         }
-        
+
         // Sprawdź czy folder assets istnieje
         $assets_dir = ROP_PANEL_PLUGIN_DIR . 'assets';
         if (!file_exists($assets_dir)) {
@@ -113,19 +126,20 @@ class ROP_Panel_Main {
             wp_mkdir_p($assets_dir . '/css');
             wp_mkdir_p($assets_dir . '/js');
         }
-        
+
         // Utwórz folder dla uploadu logo firm
         $upload_dir = wp_upload_dir();
         $rop_upload_dir = $upload_dir['basedir'] . '/rop_panel/company_logos';
-        
+
         if (!file_exists($rop_upload_dir)) {
             wp_mkdir_p($rop_upload_dir);
         }
-        
+
         flush_rewrite_rules();
     }
-    
-    public function deactivate() {
+
+    public function deactivate()
+    {
         error_log('ROP DEBUG: Plugin deactivated');
         flush_rewrite_rules();
     }

@@ -1245,3 +1245,246 @@ textarea.rop-form-control {
         min-height: 120px;
     }
 }
+
+/* ===== WIADOMOŚCI ===== */
+.rop-messages-container {
+    padding: 0;
+    background: #ffffff;
+    border-radius: var(--radius-large);
+    box-shadow: var(--shadow-light);
+    border: 1px solid var(--border-color);
+    margin: 20px 0;
+}
+
+.rop-messages-header {
+    text-align: center;
+    padding: 30px 20px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 20px;
+    border-radius: var(--radius-large) var(--radius-large) 0 0;
+    background-color: var(--bg-light);
+}
+
+.rop-messages-header h2 {
+    margin: 0 0 10px 0;
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.rop-messages-description {
+    margin: 0 0 30px 0;
+    color: var(--text-secondary);
+    font-size: 16px;
+}
+
+.rop-messages-controls {
+    display: flex;
+    justify-content: center;
+}
+
+.rop-messages-content {
+    padding: 0 20px 20px 20px;
+}
+
+.rop-messages-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+}
+
+.rop-messages-empty p {
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+/* ===== LISTA WIADOMOŚCI ===== */
+.rop-message-item {
+    display: flex;
+    padding: 20px;
+    border-bottom: 1px solid var(--border-light);
+    transition: all var(--transition-medium);
+    cursor: pointer;
+    border-radius: 0px;
+    animation: ropFadeInUp var(--transition-medium);
+    position: relative;
+}
+
+.rop-message-item:hover {
+    background-color: #ebecf2a1 !important;
+    border-radius: 20px !important;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+}
+
+.rop-message-item:last-child {
+    border-bottom: none;
+}
+
+.rop-message-item.unread {
+    background-color: rgba(85, 94, 164, 0.05);
+    border-left: 4px solid var(--primary-color);
+}
+
+.rop-message-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--radius-round);
+    overflow: hidden;
+    margin-right: 15px;
+    background-color: var(--bg-lighter);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.rop-message-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.rop-message-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.rop-message-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 14px;
+    flex-wrap: wrap;
+}
+
+.rop-message-author {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.rop-message-company {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.rop-message-time {
+    color: var(--text-muted);
+    margin-left: auto;
+}
+
+.rop-message-important {
+    background-color: #ffc107;
+    color: #212529;
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.rop-message-subject {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--text-primary);
+}
+
+.rop-message-excerpt {
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 0;
+}
+
+.rop-message-unread-indicator {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 8px;
+    height: 8px;
+    background-color: var(--primary-color);
+    border-radius: 50%;
+}
+
+/* ===== CHECKBOX CUSTOMOWY ===== */
+.rop-checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-primary);
+    user-select: none;
+}
+
+.rop-checkbox-label input[type="checkbox"] {
+    display: none;
+}
+
+.rop-checkbox-custom {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-small);
+    margin-right: 10px;
+    position: relative;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.rop-checkbox-label input[type="checkbox"]:checked + .rop-checkbox-custom {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.rop-checkbox-label input[type="checkbox"]:checked + .rop-checkbox-custom::after {
+    content: "✓";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.rop-checkbox-custom:hover {
+    border-color: var(--primary-color);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .rop-message-item {
+        padding: 15px;
+    }
+    
+    .rop-message-item:hover {
+        transform: none;
+        border-radius: 15px !important;
+    }
+    
+    .rop-message-avatar {
+        width: 40px;
+        height: 40px;
+        margin-right: 12px;
+    }
+    
+    .rop-message-subject {
+        font-size: 15px;
+    }
+    
+    .rop-message-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .rop-message-time {
+        margin-left: 0;
+    }
+    
+    .rop-message-important {
+        font-size: 10px;
+        padding: 1px 4px;
+    }
+}
