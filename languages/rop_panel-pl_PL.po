@@ -1,0 +1,160 @@
+# Polish translation for ROP Panel
+# Copyright (C) 2024
+# This file is distributed under the same license as the ROP Panel package.
+msgid ""
+msgstr ""
+"Project-Id-Version: ROP Panel 2.0.0\n"
+"Language: pl_PL\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Panel"
+msgstr "Panel"
+
+msgid "Ładowanie..."
+msgstr "Ładowanie..."
+
+msgid "Wystąpił błąd podczas ładowania."
+msgstr "Wystąpił błąd podczas ładowania."
+
+msgid "Dane zostały zapisane pomyślnie."
+msgstr "Dane zostały zapisane pomyślnie."
+
+msgid "Błąd podczas przesyłania pliku."
+msgstr "Błąd podczas przesyłania pliku."
+
+msgid "Plik jest zbyt duży. Maksymalny rozmiar to 2MB."
+msgstr "Plik jest zbyt duży. Maksymalny rozmiar to 2MB."
+
+msgid "Nieprawidłowy typ pliku. Dozwolone są tylko PNG i JPG."
+msgstr "Nieprawidłowy typ pliku. Dozwolone są tylko PNG i JPG."
+
+msgid "Zamknij"
+msgstr "Zamknij"
+
+msgid "Odpowiedz"
+msgstr "Odpowiedz"
+
+msgid "Profil firmy"
+msgstr "Profil firmy"
+
+msgid "Zarządzaj informacjami o swojej firmie i logo"
+msgstr "Zarządzaj informacjami o swojej firmie i logo"
+
+msgid "Logo firmy"
+msgstr "Logo firmy"
+
+msgid "Dodaj lub zmień logo swojej firmy"
+msgstr "Dodaj lub zmień logo swojej firmy"
+
+msgid "Prześlij logo"
+msgstr "Prześlij logo"
+
+msgid "PNG, JPG do 2MB"
+msgstr "PNG, JPG do 2MB"
+
+msgid "Informacje o firmie"
+msgstr "Informacje o firmie"
+
+msgid "Podstawowe dane kontaktowe i informacje o działalności"
+msgstr "Podstawowe dane kontaktowe i informacje o działalności"
+
+msgid "Nazwa firmy"
+msgstr "Nazwa firmy"
+
+msgid "NIP"
+msgstr "NIP"
+
+msgid "Adres"
+msgstr "Adres"
+
+msgid "Miasto"
+msgstr "Miasto"
+
+msgid "Kod pocztowy"
+msgstr "Kod pocztowy"
+
+msgid "Telefon"
+msgstr "Telefon"
+
+msgid "Email"
+msgstr "Email"
+
+msgid "Strona internetowa"
+msgstr "Strona internetowa"
+
+msgid "Branża"
+msgstr "Branża"
+
+msgid "Wybierz branżę"
+msgstr "Wybierz branżę"
+
+msgid "Doradztwo biznesowe"
+msgstr "Doradztwo biznesowe"
+
+msgid "IT i technologie"
+msgstr "IT i technologie"
+
+msgid "Finanse i bankowość"
+msgstr "Finanse i bankowość"
+
+msgid "Produkcja"
+msgstr "Produkcja"
+
+msgid "Usługi"
+msgstr "Usługi"
+
+msgid "Handel"
+msgstr "Handel"
+
+msgid "Inne"
+msgstr "Inne"
+
+msgid "Opis działalności"
+msgstr "Opis działalności"
+
+msgid "Krótki opis działalności firmy..."
+msgstr "Krótki opis działalności firmy..."
+
+msgid "Anuluj"
+msgstr "Anuluj"
+
+msgid "Zapisz zmiany"
+msgstr "Zapisz zmiany"
+
+msgid "Błąd bezpieczeństwa."
+msgstr "Błąd bezpieczeństwa."
+
+msgid "Musisz być zalogowany."
+msgstr "Musisz być zalogowany."
+
+msgid "Nazwa firmy jest wymagana."
+msgstr "Nazwa firmy jest wymagana."
+
+msgid "Nieprawidłowy adres email."
+msgstr "Nieprawidłowy adres email."
+
+msgid "Nieprawidłowy adres strony internetowej."
+msgstr "Nieprawidłowy adres strony internetowej."
+
+msgid "Profil firmy został zaktualizowany."
+msgstr "Profil firmy został zaktualizowany."
+
+msgid "Nie wybrano pliku."
+msgstr "Nie wybrano pliku."
+
+msgid "Logo zostało przesłane pomyślnie."
+msgstr "Logo zostało przesłane pomyślnie."
+
+msgid "Nie można określić ID posta."
+msgstr "Nie można określić ID posta."
+
+msgid "Nie znaleziono posta."
+msgstr "Nie znaleziono posta."
+
+msgid "Odpowiedź w: %s"
+msgstr "Odpowiedź w: %s"
+
+msgid "Nieznany użytkownik"
+msgstr "Nieznany użytkownik"
