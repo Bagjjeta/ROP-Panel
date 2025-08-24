@@ -3,17 +3,14 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class ROP_Panel_Core
-{
-
-    public function __construct()
-    {
+class ROP_Panel_Core {
+    
+    public function __construct() {
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
         add_action('wp_footer', array($this, 'render_popups'));
     }
-
-    public function enqueue_scripts()
-    {
+    
+    public function enqueue_scripts() {
         // CSS - sprawdź czy plik istnieje
         $css_file = ROP_PANEL_PLUGIN_URL . 'assets/css/rop-panel.css';
         if (file_exists(ROP_PANEL_PLUGIN_DIR . 'assets/css/rop-panel.css')) {
@@ -24,7 +21,7 @@ class ROP_Panel_Core
                 ROP_PANEL_VERSION
             );
         }
-
+        
         // JavaScript - sprawdź czy plik istnieje
         $js_file = ROP_PANEL_PLUGIN_URL . 'assets/js/rop-panel.js';
         if (file_exists(ROP_PANEL_PLUGIN_DIR . 'assets/js/rop-panel.js')) {
@@ -35,7 +32,7 @@ class ROP_Panel_Core
                 ROP_PANEL_VERSION,
                 true
             );
-
+            
             // Lokalizacja dla AJAX
             wp_localize_script('rop-panel-js', 'rop_panel_ajax', array(
                 'ajax_url' => admin_url('admin-ajax.php'),
@@ -48,29 +45,11 @@ class ROP_Panel_Core
                 'invalid_file_type' => __('Nieprawidłowy typ pliku. Dozwolone są tylko PNG i JPG.', 'rop_panel')
             ));
         }
-
-        $messages_js_file = ROP_PANEL_PLUGIN_URL . 'assets/js/rop-messages.js';
-        if (file_exists(ROP_PANEL_PLUGIN_DIR . 'assets/js/rop-messages.js')) {
-            wp_enqueue_script(
-                'rop-messages-js',
-                $messages_js_file,
-                array('jquery', 'rop-panel-js'),
-                ROP_PANEL_VERSION,
-                true
-            );
-
-            // Lokalizacja dla Messages AJAX
-            wp_localize_script('rop-messages-js', 'ropPanel', array(
-                'ajaxUrl' => admin_url('admin-ajax.php'),
-                'nonce' => wp_create_nonce('rop_panel_nonce')
-            ));
-        }
     }
-
+    
     // ZAKTUALIZOWANY - dodany popup odpowiedzi
-    public function render_popups()
-    {
-?>
+    public function render_popups() {
+        ?>
         <!-- Forum Popup - dla postów forum -->
         <div id="rop-forum-popup-overlay" class="rop-popup-overlay" style="display: none;">
             <div class="rop-popup-container">
@@ -92,7 +71,7 @@ class ROP_Panel_Core
                         <span class="rop-popup-category"></span>
                         <span class="rop-popup-date"></span>
                     </div>
-
+                    
                     <!-- STATYSTYKI W POPUP -->
                     <div class="rop-popup-stats">
                         <div class="rop-popup-stat rop-popup-likes">
@@ -108,13 +87,13 @@ class ROP_Panel_Core
                             <span class="rop-popup-comment-count" id="rop-popup-comment-count">0</span>
                         </div>
                     </div>
-
+                    
                     <div class="rop-popup-body">
                         <div class="rop-loading">
                             <?php _e('Ładowanie...', 'rop_panel'); ?>
                         </div>
                     </div>
-
+                    
                     <!-- KONTENER NA KOMENTARZE -->
                     <div class="rop-popup-replies" id="rop-popup-replies" style="display: none;">
                         <div class="rop-replies-header">
@@ -168,8 +147,8 @@ class ROP_Panel_Core
                         <form id="rop-reply-form">
                             <div class="rop-form-group rop-form-group-required">
                                 <label for="reply_content" class="rop-form-label"><?php _e('Twoja odpowiedź', 'rop_panel'); ?></label>
-                                <textarea id="reply_content" name="reply_content" class="rop-form-control" rows="6"
-                                    placeholder="<?php _e('Napisz swoją odpowiedź...', 'rop_panel'); ?>" required></textarea>
+                                <textarea id="reply_content" name="reply_content" class="rop-form-control" rows="6" 
+                                          placeholder="<?php _e('Napisz swoją odpowiedź...', 'rop_panel'); ?>" required></textarea>
                             </div>
 
                             <div class="rop-form-footer">
@@ -185,6 +164,6 @@ class ROP_Panel_Core
                 </div>
             </div>
         </div>
-<?php
+        <?php
     }
 }
