@@ -25,12 +25,15 @@
 
         loadMessages: function(e) {
             e.preventDefault();
-            
-            if ($('#rop-messages').hasClass('active')) {
-                return;
-            }
+    
+			console.log('Messages clicked - starting load');
+			console.log('ropPanel object:', ropPanel);
 
-            this.showLoading();
+			if ($('#rop-messages').hasClass('active')) {
+				return;
+			}
+
+			this.showLoading();
 
             $.ajax({
                 url: ropPanel.ajaxUrl,
@@ -190,10 +193,17 @@
         },
 
         displayMessages: function(content) {
-            $('.rop-content').html(content);
-            $('#rop-messages').addClass('active');
-            $('.rop-tab').removeClass('active');
-        },
+			// Znajdź właściwy kontener panelu
+			const $panelContainer = $('#panel-container');
+			if ($panelContainer.length) {
+				$panelContainer.html(content);
+			} else {
+				// Fallback jeśli nie ma panel-container
+				$('.rop-content').html(content);
+			}
+			$('#rop-messages').addClass('active');
+			$('.rop-tab').removeClass('active');
+		},
 
         openMessage: function(e) {
             const messageId = $(e.currentTarget).data('message-id');
