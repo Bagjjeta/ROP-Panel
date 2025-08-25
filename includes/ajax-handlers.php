@@ -275,61 +275,26 @@ function rop_delete_reply_simple() {
     }
 }
 
-// ===== BETTER MESSAGES INTEGRATION =====
-add_action('wp_ajax_rop_load_messages', 'rop_load_messages_handler');
-
-function rop_load_messages_handler() {
-    error_log('ROP DEBUG: rop_load_messages_handler called by user: ' . (is_user_logged_in() ? wp_get_current_user()->user_login : 'not logged in'));
-    
-    // Sprawdź nonce
-    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'rop_panel_nonce')) {
-        error_log('ROP DEBUG: Messages - Nonce verification failed');
-        wp_send_json_error('Błąd bezpieczeństwa - nieprawidłowy nonce');
+function load_messages_panel() {
+    if (!wp_verify_nonce($_POST['nonce'], 'rop_panel_nonce')) {
+        wp_send_json_error('Nieprawidłowy token bezpieczeństwa');
     }
-    
-    // Sprawdź czy użytkownik jest zalogowany
+
     if (!is_user_logged_in()) {
-        error_log('ROP DEBUG: Messages - User not logged in');
-        wp_send_json_error('Musisz być zalogowany, aby zobaczyć wiadomości');
+        wp_send_json_error('Musisz być zalogowany');
     }
-    
-    try {
-        error_log('ROP DEBUG: Messages - Processing shortcode [bp-better-messages]');
-        
-        // Sprawdź czy Better Messages jest aktywne
-        if (!function_exists('BP_Better_Messages')) {
-            error_log('ROP DEBUG: Messages - Better Messages plugin not active');
-            wp_send_json_error('Wtyczka Better Messages nie jest aktywna');
-        }
-        
-        // Wykonaj shortcode Better Messages
-        $messages_content = do_shortcode('[bp-better-messages]');
-        
-        if (empty($messages_content)) {
-            error_log('ROP DEBUG: Messages - Empty content from shortcode');
-            wp_send_json_error('Nie udało się załadować panelu wiadomości');
-        }
-        
-        // Owijamy w kontener z naszymi stylami
-        $wrapped_content = '<div class="rop-messages-container">' . $messages_content . '</div>';
-        
-        error_log('ROP DEBUG: Messages - Successfully loaded Better Messages content');
-        
-        wp_send_json_success(array(
-            'content' => $wrapped_content,
-            'message' => 'Panel wiadomości załadowany pomyślnie'
-        ));
-        
-    } catch (Exception $e) {
-        error_log('ROP DEBUG: Messages - Exception: ' . $e->getMessage());
-        wp_send_json_error('Wystąpił błąd: ' . $e->getMessage());
-    } catch (Throwable $e) {
-        error_log('ROP DEBUG: Messages - Throwable: ' . $e->getMessage());
-        wp_send_json_error('Wystąpił krytyczny błąd: ' . $e->getMessage());
-    }
-}
 
-error_log('ROP DEBUG: Messages AJAX handler registered at ' . current_time('Y-m-d H:i:s'));
+    // Tylko HTML z shortcoda
+    $content = do_shortcode('[better_messages]');
+
+    wp_send_json_success([
+        'content' => $content
+    ]);
+}
+add_action('wp_ajax_rop_load_messages_panel', 'load_messages_panel');
+add_action('wp_ajax_nopriv_rop_load_messages_panel', 'load_messages_panel');
+
+error_log('ROP DEBUG: AJAX functions registered at ' . current_time('Y-m-d H:i:s'));
 
 class ROP_Panel_Ajax {
     

@@ -8,6 +8,7 @@
             this.initForumPopup();
             this.initNewTopicPopup();
             this.initReplyPopup();
+            this.initMessagesPanel(); // Nowa funkcja
             console.log('ROP Panel initialized');
             this.autoLoadProfile();
         },
@@ -67,13 +68,56 @@
             });
         },
 
+        // Nowa funkcja do panelu wiadomości
+        loadMessagesTab: function () {
+    var self = this;
+    this.setActiveTab('messages');
+
+    // pokaż info o ładowaniu
+    $(document).on('click', '#rop-messages', function(e) {
+    e.preventDefault();
+
+    // Ukryj panel główny
+    $('#panel-container').hide();
+
+    // Pokaż panel z wiadomościami
+    $('#messages-rop').show();
+
+    console.log('Przełączono na wiadomości');
+});
+
+
+    
+    console.log('Messages panel loaded with [better_messages] shortcode');
+},
+
+
         setActiveTab: function (tabName) {
             $('.rop-tab').removeClass('active');
             if (tabName === 'profile') {
                 $('#company-profile').addClass('active');
+				$('#panel-container').show();
+				$('#messages-rop').hide();
             } else if (tabName === 'forum') {
                 $('#rop-forum').addClass('active');
+				$('#panel-container').show();
+				$('#messages-rop').hide();
+            } else if (tabName === 'messages') {
+                $('#rop-messages').addClass('active');
+				$('#panel-container').hide();
+				$('#messages-rop').show();
             }
+        },
+
+        // Nowa funkcja inicjalizująca panel wiadomości
+        initMessagesPanel: function () {
+            var self = this;
+
+            $(document).on('click', '#rop-messages', function (e) {
+                e.preventDefault();
+                console.log('Messages tab clicked');
+                self.loadMessagesTab();
+            });
         },
 
         initProfileEditor: function () {
@@ -1044,6 +1088,10 @@
 
         if ($('#rop-forum').length) {
             console.log('Element #rop-forum found');
+        }
+
+        if ($('#rop-messages').length) {
+            console.log('Element #rop-messages found');
         }
 
         if ($('#panel-container').length) {

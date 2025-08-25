@@ -2,22 +2,109 @@
 if (!defined('ABSPATH')) {
     exit;
 }
-
 class ROP_Panel_Forum_Manager
 {
-
     public function __construct()
     {
         add_action('wp_ajax_rop_get_forum_topics', array($this, 'get_forum_topics'));
         add_action('wp_ajax_nopriv_rop_get_forum_topics', array($this, 'get_forum_topics'));
         add_action('wp_ajax_rop_filter_forum_topics', array($this, 'filter_forum_topics'));
         add_action('wp_ajax_nopriv_rop_filter_forum_topics', array($this, 'filter_forum_topics'));
-
         add_action('wp_ajax_rop_get_new_topic_form', array($this, 'get_new_topic_form'));
         add_action('wp_ajax_rop_create_new_topic', array($this, 'create_new_topic'));
-
         add_action('wp_ajax_rop_toggle_topic_like', array($this, 'toggle_topic_like'));
         add_action('wp_ajax_nopriv_rop_toggle_topic_like', array($this, 'toggle_topic_like'));
+        
+        // Dodajemy filtr do modyfikacji awatara w Better Messages
+        add_filter('get_avatar', array($this, 'replace_avatar_with_company_logo'), 999, 5);
+    }
+    
+    /**
+     * Zastępuje standardowy awatar logo firmy w Better Messages
+     * 
+     * @param string $avatar HTML z awatarem
+     * @param int|string|object $user_id ID użytkownika lub obiekt użytkownika
+     * @param int $size Rozmiar awatara
+     * @param string $default Domyślny awatar
+     * @param string $alt Tekst alternatywny
+     * @return string HTML z awatarem lub logo firmy
+     */
+    public function replace_avatar_with_company_logo($avatar, $user_id, $size, $default, $alt) {
+        // Upewnij się, że mamy ID użytkownika jako liczbę
+        if (is_object($user_id)) {
+            $user_id = $user_id->ID;
+        } else {
+            $user_id = (int) $user_id;
+        }
+        
+        // Sprawdź, czy jesteśmy w kontekście Better Messages
+        if ($this->is_better_messages_context()) {
+            // Pobierz logo firmy
+            $company_logo = get_user_meta($user_id, 'rop_company_logo', true);
+            
+            // Jeśli logo firmy istnieje, użyj go zamiast standardowego awatara
+            if (!empty($company_logo) && file_exists(str_replace(home_url(), ABSPATH, $company_logo))) {
+                $avatar_html = sprintf(
+                    '<img src="%s" alt="%s" class="avatar avatar-%s photo" height="%s" width="%s" style="border-radius: 50%%; object-fit: cover;" />',
+                    esc_url($company_logo),
+                    esc_attr($alt),
+                    esc_attr($size),
+                    esc_attr($size),
+                    esc_attr($size)
+                );
+                
+                return $avatar_html;
+            }
+        }
+        
+        // Jeśli nie jesteśmy w Better Messages lub nie ma logo firmy, zwróć oryginalny awatar
+        return $avatar;
+    }
+    
+    /**
+     * Sprawdza, czy jesteśmy w kontekście Better Messages
+     * 
+     * @return bool
+     */
+    private function is_better_messages_context() {
+        // Sprawdź, czy funkcje Better Messages istnieją
+        if (!function_exists('Better_Messages') || !class_exists('Better_Messages')) {
+            return false;
+        }
+        
+        // Sprawdź, czy jesteśmy na stronie czatu w panelu admina
+        if (is_admin()) {
+            global $pagenow;
+            if ($pagenow === 'admin.php' && isset($_GET['page']) && $_GET['page'] === 'better-messages') {
+                return true;
+            }
+        }
+        
+        // Sprawdź, czy jesteśmy w ajaxie Better Messages
+        if (wp_doing_ajax() && isset($_REQUEST['action']) && strpos($_REQUEST['action'], 'better_messages_') === 0) {
+            return true;
+        }
+        
+        // Sprawdź, czy jesteśmy w interfejsie użytkownika Better Messages
+        if (!is_admin()) {
+            // Sprawdź, czy Better Messages ma ustawioną stronę
+            $bm_instance = Better_Messages();
+            if (isset($bm_instance->settings) && isset($bm_instance->settings['pageSlug'])) {
+                $page_slug = $bm_instance->settings['pageSlug'];
+                // Sprawdź, czy aktualna strona ma slug Better Messages
+                if (is_page($page_slug)) {
+                    return true;
+                }
+            }
+            
+            // Sprawdź, czy treść strony zawiera shortcode Better Messages
+            global $post;
+            if ($post && has_shortcode($post->post_content, 'better_messages')) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     public function toggle_topic_like()
@@ -25,28 +112,21 @@ class ROP_Panel_Forum_Manager
         if (!wp_verify_nonce($_POST['nonce'], 'rop_panel_nonce')) {
             wp_die(__('Błąd bezpieczeństwa.', 'rop_panel'));
         }
-
         if (!is_user_logged_in()) {
             wp_send_json_error(__('Musisz być zalogowany, aby polubić post.', 'rop_panel'));
         }
-
         $topic_id = intval($_POST['topic_id']);
         $user_id = get_current_user_id();
-
         if (!$topic_id || !bbp_is_topic($topic_id)) {
             wp_send_json_error(__('Nieprawidłowy temat.', 'rop_panel'));
         }
-
         $user_likes = get_user_meta($user_id, 'rop_liked_topics', true);
         if (!is_array($user_likes)) {
             $user_likes = array();
         }
-
         $is_liked = in_array($topic_id, $user_likes);
-
         $current_likes = get_post_meta($topic_id, '_rop_like_count', true);
         $current_likes = $current_likes ? intval($current_likes) : 0;
-
         if ($is_liked) {
             $user_likes = array_diff($user_likes, array($topic_id));
             $new_likes = max(0, $current_likes - 1);
@@ -56,10 +136,8 @@ class ROP_Panel_Forum_Manager
             $new_likes = $current_likes + 1;
             $action = 'liked';
         }
-
         update_user_meta($user_id, 'rop_liked_topics', array_values(array_unique($user_likes)));
         update_post_meta($topic_id, '_rop_like_count', $new_likes);
-
         wp_send_json_success(array(
             'action' => $action,
             'likes_count' => $new_likes,
@@ -72,19 +150,14 @@ class ROP_Panel_Forum_Manager
         if (!wp_verify_nonce($_POST['nonce'], 'rop_panel_nonce')) {
             wp_die(__('Błąd bezpieczeństwa.', 'rop_panel'));
         }
-
         if (!is_user_logged_in()) {
             wp_send_json_error(__('Musisz być zalogowany, aby utworzyć nowy temat.', 'rop_panel'));
         }
-
         if (!function_exists('bbp_get_version')) {
             wp_send_json_error(__('bbPress nie jest aktywny.', 'rop_panel'));
         }
-
         $selected_forum = isset($_POST['selected_forum']) ? intval($_POST['selected_forum']) : 0;
-
         $form_html = $this->render_new_topic_form($selected_forum);
-
         wp_send_json_success(array(
             'content' => $form_html
         ));
@@ -95,37 +168,28 @@ class ROP_Panel_Forum_Manager
         if (!wp_verify_nonce($_POST['nonce'], 'rop_panel_nonce')) {
             wp_die(__('Błąd bezpieczeństwa.', 'rop_panel'));
         }
-
         if (!is_user_logged_in()) {
             wp_send_json_error(__('Musisz być zalogowany.', 'rop_panel'));
         }
-
         $title = sanitize_text_field($_POST['topic_title']);
         $content = wp_kses_post($_POST['topic_content']);
         $forum_id = intval($_POST['forum_id']);
-
         $errors = array();
-
         if (empty($title)) {
             $errors[] = __('Tytuł posta jest wymagany.', 'rop_panel');
         }
-
         if (empty($content)) {
             $errors[] = __('Treść posta jest wymagana.', 'rop_panel');
         }
-
         if (empty($forum_id)) {
             $errors[] = __('Kategoria jest wymagana.', 'rop_panel');
         }
-
         if (!empty($errors)) {
             wp_send_json_error(implode('<br>', $errors));
         }
-
         if (!bbp_is_forum($forum_id)) {
             wp_send_json_error(__('Wybrana kategoria nie istnieje.', 'rop_panel'));
         }
-
         $topic_data = array(
             'post_parent' => $forum_id,
             'post_status' => bbp_get_public_status_id(),
@@ -137,21 +201,15 @@ class ROP_Panel_Forum_Manager
             'comment_status' => 'closed',
             'menu_order' => 0,
         );
-
         $topic_id = wp_insert_post($topic_data);
-
         if (is_wp_error($topic_id) || !$topic_id) {
             wp_send_json_error(__('Wystąpił błąd podczas tworzenia tematu.', 'rop_panel'));
         }
-
         bbp_update_topic_forum_id($topic_id, $forum_id);
         bbp_update_topic_topic_id($topic_id, $topic_id);
-
         update_post_meta($topic_id, '_rop_like_count', 0);
         update_post_meta($topic_id, '_bbp_reply_count', 0);
-
         bbp_update_forum($forum_id);
-
         wp_send_json_success(__('Temat został utworzony pomyślnie!', 'rop_panel'));
     }
 
@@ -164,18 +222,15 @@ class ROP_Panel_Forum_Manager
             'orderby' => 'title',
             'order' => 'ASC'
         ));
-
         ob_start();
 ?>
         <div class="rop-new-topic-form">
             <form id="rop-new-topic-form">
-
                 <div class="rop-form-group rop-form-group-required">
                     <label for="topic_title" class="rop-form-label"><?php _e('Tytuł posta', 'rop_panel'); ?></label>
                     <input type="text" id="topic_title" name="topic_title" class="rop-form-control"
                         placeholder="<?php _e('Wprowadź tytuł posta...', 'rop_panel'); ?>" required>
                 </div>
-
                 <div class="rop-form-group rop-form-group-required">
                     <label for="forum_id" class="rop-form-label"><?php _e('Kategoria', 'rop_panel'); ?></label>
                     <select id="forum_id" name="forum_id" class="rop-form-control" required>
@@ -187,13 +242,11 @@ class ROP_Panel_Forum_Manager
                         <?php endforeach; ?>
                     </select>
                 </div>
-
                 <div class="rop-form-group rop-form-group-required">
                     <label for="topic_content" class="rop-form-label"><?php _e('Treść posta', 'rop_panel'); ?></label>
                     <textarea id="topic_content" name="topic_content" class="rop-form-control" rows="8"
                         placeholder="<?php _e('Napisz treść swojego posta...', 'rop_panel'); ?>" required></textarea>
                 </div>
-
                 <div class="rop-form-footer">
                     <button type="button" class="rop-btn rop-btn-secondary" id="rop-cancel-new-topic">
                         <?php _e('Anuluj', 'rop_panel'); ?>
@@ -213,13 +266,10 @@ class ROP_Panel_Forum_Manager
         if (!wp_verify_nonce($_POST['nonce'], 'rop_panel_nonce')) {
             wp_die(__('Błąd bezpieczeństwa.', 'rop_panel'));
         }
-
         if (!function_exists('bbp_get_version')) {
             wp_send_json_error(__('bbPress nie jest aktywny.', 'rop_panel'));
         }
-
         $forum_html = $this->render_forum_topics();
-
         wp_send_json_success(array(
             'content' => $forum_html
         ));
@@ -230,16 +280,12 @@ class ROP_Panel_Forum_Manager
         if (!wp_verify_nonce($_POST['nonce'], 'rop_panel_nonce')) {
             wp_die(__('Błąd bezpieczeństwa.', 'rop_panel'));
         }
-
         if (!function_exists('bbp_get_version')) {
             wp_send_json_error(__('bbPress nie jest aktywny.', 'rop_panel'));
         }
-
         $forum_id = sanitize_text_field($_POST['forum_id']);
         $sort_by = sanitize_text_field($_POST['sort_by']);
-
         $topics_html = $this->get_filtered_topics($forum_id, $sort_by);
-
         wp_send_json_success(array(
             'topics_html' => $topics_html
         ));
@@ -265,16 +311,13 @@ class ROP_Panel_Forum_Manager
                 </div>
             <?php
             }
-
             return ob_get_clean();
         }
-
         $query_args = array(
             'post_type' => bbp_get_topic_post_type(),
             'post_status' => 'publish',
             'posts_per_page' => 20,
         );
-
         if (!empty($forum_id)) {
             $query_args['meta_query'] = array(
                 array(
@@ -291,7 +334,6 @@ class ROP_Panel_Forum_Manager
                 )
             );
         }
-
         switch ($sort_by) {
             case 'date_asc':
                 $query_args['orderby'] = 'date';
@@ -309,9 +351,7 @@ class ROP_Panel_Forum_Manager
                 $query_args['orderby'] = 'date';
                 $query_args['order'] = 'DESC';
         }
-
         $topics_query = new WP_Query($query_args);
-
         ob_start();
         if ($topics_query->have_posts()):
             while ($topics_query->have_posts()): $topics_query->the_post();
@@ -326,7 +366,6 @@ class ROP_Panel_Forum_Manager
                 </button>
             </div>
         <?php endif;
-
         return ob_get_clean();
     }
 
@@ -337,7 +376,6 @@ class ROP_Panel_Forum_Manager
             'posts_per_page' => 20,
             'fields' => 'ids'
         );
-
         if (!empty($forum_id)) {
             $query_args['meta_query'] = array(
                 array(
@@ -354,10 +392,8 @@ class ROP_Panel_Forum_Manager
                 )
             );
         }
-
         $topics_query = new WP_Query($query_args);
         $topic_ids = $topics_query->posts;
-
         $topics_with_counts = array();
         foreach ($topic_ids as $topic_id) {
             $reply_count = $this->count_topic_replies($topic_id);
@@ -366,14 +402,12 @@ class ROP_Panel_Forum_Manager
                 'replies' => $reply_count
             );
         }
-
         usort($topics_with_counts, function($a, $b) {
             if ($a['replies'] == $b['replies']) {
                 return 0;
             }
             return ($a['replies'] > $b['replies']) ? -1 : 1;
         });
-
         return array_column($topics_with_counts, 'id');
     }
 
@@ -392,14 +426,12 @@ class ROP_Panel_Forum_Manager
                 )
             )
         ));
-
         ob_start();
         ?>
         <div class="rop-forum-container">
             <div class="rop-forum-header">
                 <h2>Forum</h2>
                 <p class="rop-forum-description">Dyskutuj, dziel się wiedzą i nawiązuj kontakty biznesowe</p>
-
                 <div class="rop-forum-controls">
                     <div class="rop-forum-filters">
                         <select id="rop-forum-category" class="rop-form-control">
@@ -416,7 +448,6 @@ class ROP_Panel_Forum_Manager
                                 <option value="<?php echo $forum->ID; ?>"><?php echo esc_html($forum->post_title); ?></option>
                             <?php endforeach; ?>
                         </select>
-
                         <select id="rop-forum-sort" class="rop-form-control">
                             <option value="date_desc">Najnowsze</option>
                             <option value="date_asc">Najstarsze</option>
@@ -424,13 +455,11 @@ class ROP_Panel_Forum_Manager
                             <option value="title_asc">Alfabetycznie (A-Z)</option>
                         </select>
                     </div>
-
                     <button class="rop-btn rop-btn-primary" id="rop-new-topic">
                         Nowy post
                     </button>
                 </div>
             </div>
-
             <div class="rop-forum-topics" id="rop-forum-topics-list">
                 <?php if ($topics_query->have_posts()): ?>
                     <?php while ($topics_query->have_posts()): $topics_query->the_post(); ?>
@@ -446,7 +475,6 @@ class ROP_Panel_Forum_Manager
                     </div>
                 <?php endif; ?>
             </div>
-
             <?php if ($topics_query->found_posts > 20): ?>
                 <div class="rop-forum-pagination">
                     <button class="rop-btn rop-btn-secondary" id="rop-load-more-topics">
@@ -466,30 +494,22 @@ class ROP_Panel_Forum_Manager
         if (!$company) {
             $company = get_user_meta($author_id, 'company', true);
         }
-
         $forum_id = bbp_get_topic_forum_id($topic_id);
         $forum_title = bbp_get_forum_title($forum_id);
-
         $reply_count = $this->count_topic_replies($topic_id);
-
         $like_count = get_post_meta($topic_id, '_rop_like_count', true);
         $like_count = $like_count ? intval($like_count) : 0;
-
         $current_user_id = get_current_user_id();
         $user_likes = get_user_meta($current_user_id, 'rop_liked_topics', true);
         $is_liked = is_array($user_likes) && in_array($topic_id, $user_likes);
-
         $topic_tags = wp_get_post_terms($topic_id, bbp_get_topic_tag_tax_id());
-
         $time_diff = human_time_diff(get_post_time('U', false, $topic_id), current_time('timestamp'));
-
         $avatar_html = $this->get_user_avatar_or_logo($author_id);
         ?>
         <div class="rop-topic-item" data-topic-id="<?php echo $topic_id; ?>">
             <div class="rop-topic-avatar">
                 <?php echo $avatar_html; ?>
             </div>
-
             <div class="rop-topic-content">
                 <div class="rop-topic-meta">
                     <span class="rop-topic-author"><?php echo esc_html($author_data->display_name); ?></span>
@@ -498,17 +518,14 @@ class ROP_Panel_Forum_Manager
                     <?php endif; ?>
                     <span class="rop-topic-time"><?php echo $time_diff; ?> temu</span>
                 </div>
-
                 <h3 class="rop-topic-title">
                     <?php echo esc_html(bbp_get_topic_title($topic_id)); ?>
                 </h3>
-
                 <?php if ($forum_title): ?>
                     <div class="rop-topic-category">
                         <span class="rop-category-badge"><?php echo esc_html($forum_title); ?></span>
                     </div>
                 <?php endif; ?>
-
                 <div class="rop-topic-excerpt">
                     <?php 
                     $content = get_post_field('post_content', $topic_id);
@@ -516,7 +533,6 @@ class ROP_Panel_Forum_Manager
                     echo esc_html($excerpt);
                     ?>
                 </div>
-
                 <?php if (!empty($topic_tags)): ?>
                     <div class="rop-topic-tags">
                         <?php foreach (array_slice($topic_tags, 0, 3) as $tag): ?>
@@ -524,7 +540,6 @@ class ROP_Panel_Forum_Manager
                         <?php endforeach; ?>
                     </div>
                 <?php endif; ?>
-
                 <div class="rop-topic-stats">
                     <span class="rop-stat rop-like-container">
                         <button class="rop-like-btn <?php echo $is_liked ? 'liked' : ''; ?>" 
@@ -534,7 +549,6 @@ class ROP_Panel_Forum_Manager
                         </button>
                         <span class="rop-like-count"><?php echo $like_count; ?></span>
                     </span>
-
                     <span class="rop-stat rop-comment-container">
                         <span class="rop-comment-icon">💬</span>
                         <span class="rop-comment-count"><?php echo $reply_count; ?></span>
