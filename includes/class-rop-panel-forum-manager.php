@@ -17,6 +17,8 @@ class ROP_Panel_Forum_Manager
         
         // Dodajemy filtr do modyfikacji awatara w Better Messages
         add_filter('get_avatar', array($this, 'replace_avatar_with_company_logo'), 999, 5);
+        // AJAX handlers
+        
     }
     
     /**
@@ -62,50 +64,58 @@ class ROP_Panel_Forum_Manager
     }
     
     /**
-     * Sprawdza, czy jesteśmy w kontekście Better Messages
-     * 
-     * @return bool
-     */
-    private function is_better_messages_context() {
-        // Sprawdź, czy funkcje Better Messages istnieją
-        if (!function_exists('Better_Messages') || !class_exists('Better_Messages')) {
-            return false;
-        }
-        
-        // Sprawdź, czy jesteśmy na stronie czatu w panelu admina
-        if (is_admin()) {
-            global $pagenow;
-            if ($pagenow === 'admin.php' && isset($_GET['page']) && $_GET['page'] === 'better-messages') {
-                return true;
-            }
-        }
-        
-        // Sprawdź, czy jesteśmy w ajaxie Better Messages
-        if (wp_doing_ajax() && isset($_REQUEST['action']) && strpos($_REQUEST['action'], 'better_messages_') === 0) {
-            return true;
-        }
-        
-        // Sprawdź, czy jesteśmy w interfejsie użytkownika Better Messages
-        if (!is_admin()) {
-            // Sprawdź, czy Better Messages ma ustawioną stronę
-            $bm_instance = Better_Messages();
-            if (isset($bm_instance->settings) && isset($bm_instance->settings['pageSlug'])) {
-                $page_slug = $bm_instance->settings['pageSlug'];
-                // Sprawdź, czy aktualna strona ma slug Better Messages
-                if (is_page($page_slug)) {
-                    return true;
-                }
-            }
-            
-            // Sprawdź, czy treść strony zawiera shortcode Better Messages
-            global $post;
-            if ($post && has_shortcode($post->post_content, 'better_messages')) {
-                return true;
-            }
-        }
-        
+ * Sprawdza czy jesteśmy w kontekście Better Messages
+ */
+private function is_better_messages_context() {
+    // Sprawdź czy Better Messages jest aktywny
+    if (!class_exists('Better_Messages')) {
         return false;
     }
+    
+    // Sprawdź różne konteksty Better Messages
+    $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 15);
+    foreach ($backtrace as $trace) {
+        if (isset($trace['file'])) {
+            // Sprawdź czy wywołanie pochodzi z Better Messages
+            if (strpos($trace['file'], 'better-messages') !== false) {
+                return true;
+            }
+            if (strpos($trace['file'], 'bp-better-messages') !== false) {
+                return true;
+            }
+        }
+        
+        if (isset($trace['class'])) {
+            // Sprawdź czy klasa należy do Better Messages
+            if (strpos($trace['class'], 'Better_Messages') !== false) {
+                return true;
+            }
+            if (strpos($trace['class'], 'BM_') !== false) {
+                return true;
+            }
+        }
+    }
+    
+    // Sprawdź czy jesteśmy na stronie z Better Messages
+    global $wp;
+    if (isset($wp->request)) {
+        if (strpos($wp->request, 'messages') !== false || 
+            strpos($wp->request, 'conversation') !== false) {
+            return true;
+        }
+    }
+    
+    // Sprawdź AJAX actions dla Better Messages
+    if (defined('DOING_AJAX') && DOING_AJAX) {
+        $action = isset($_POST['action']) ? $_POST['action'] : '';
+        if (strpos($action, 'better_messages') !== false || 
+            strpos($action, 'bm_') !== false) {
+            return true;
+        }
+    }
+    
+    return false;
+}
 
     public function toggle_topic_like()
     {

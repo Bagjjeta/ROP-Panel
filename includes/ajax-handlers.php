@@ -294,6 +294,9 @@ function load_messages_panel() {
 add_action('wp_ajax_rop_load_messages_panel', 'load_messages_panel');
 add_action('wp_ajax_nopriv_rop_load_messages_panel', 'load_messages_panel');
 
+add_action('wp_ajax_rop_get_company_logo', array($ajax_handlers, 'get_company_logo'));
+add_action('wp_ajax_nopriv_rop_get_company_logo', array($ajax_handlers, 'get_company_logo'));
+
 error_log('ROP DEBUG: AJAX functions registered at ' . current_time('Y-m-d H:i:s'));
 
 class ROP_Panel_Ajax {
@@ -726,6 +729,31 @@ class ROP_Panel_Ajax {
         
         return true;
     }
+
+    /**
+ * Pobiera logo firmy dla użytkownika (AJAX)
+ */
+public function get_company_logo() {
+    if (!wp_verify_nonce($_POST['nonce'], 'rop_panel_nonce')) {
+        wp_send_json_error('Błąd bezpieczeństwa');
+    }
+    
+    $user_id = intval($_POST['user_id']);
+    if (!$user_id) {
+        wp_send_json_error('Nieprawidłowy ID użytkownika');
+    }
+    
+    $company_logo = get_user_meta($user_id, 'rop_company_logo', true);
+    
+    if (!empty($company_logo) && file_exists(str_replace(home_url(), ABSPATH, $company_logo))) {
+        wp_send_json_success(array(
+            'logo_url' => $company_logo,
+            'user_id' => $user_id
+        ));
+    } else {
+        wp_send_json_error('Brak logo firmy');
+    }
+}
 }
 
 new ROP_Panel_Ajax();

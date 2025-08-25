@@ -1245,3 +1245,22 @@ textarea.rop-form-control {
         min-height: 120px;
     }
 }
+
+/* ===== COMPANY LOGOS IN BETTER MESSAGES ===== */
+.rop-company-logo {
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    transition: all 0.3s ease !important;
+}
+
+.bm-pic .rop-company-logo,
+.better-messages-avatar .rop-company-logo {
+    width: 100% !important;
+    height: 100% !important;
+    border: 2px solid var(--border-light) !important;
+}
+
+.rop-company-logo:hover {
+    transform: scale(1.05) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}

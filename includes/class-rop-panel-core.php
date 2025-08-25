@@ -45,6 +45,24 @@ class ROP_Panel_Core {
                 'invalid_file_type' => __('Nieprawidłowy typ pliku. Dozwolone są tylko PNG i JPG.', 'rop_panel')
             ));
         }
+
+        // Avatar Replacer for Better Messages
+        $avatar_js_file = ROP_PANEL_PLUGIN_URL . 'assets/js/avatar-replacer.js';
+        if (file_exists(ROP_PANEL_PLUGIN_DIR . 'assets/js/avatar-replacer.js')) {
+            wp_enqueue_script(
+                'rop-avatar-replacer',
+                $avatar_js_file,
+                array('jquery'),
+                ROP_PANEL_VERSION,
+                true
+            );
+            
+            // Lokalizacja dla Avatar Replacer
+            wp_localize_script('rop-avatar-replacer', 'rop_ajax', array(
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('rop_panel_nonce')
+            ));
+        }
     }
     
     // ZAKTUALIZOWANY - dodany popup odpowiedzi
