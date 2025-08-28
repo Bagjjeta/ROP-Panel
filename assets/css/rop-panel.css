@@ -262,7 +262,6 @@ textarea.rop-form-control {
     border-radius: 0 0 var(--radius-large) var(--radius-large);
 }
 
-/* ===== FORUM TOPICS LIST ===== */
 .rop-forum-topics {
     padding: 0 20px;
 }
@@ -426,7 +425,7 @@ textarea.rop-form-control {
     gap: 8px;
 }
 
-/* Polubienia i komentarze */
+/* ===== Polubienia i komentarze ===== */
 .rop-like-container,
 .rop-comment-container {
     display: flex;
@@ -766,7 +765,7 @@ textarea.rop-form-control {
     padding: 40px 20px;
 }
 
-/* ===== AKCJE KOMENTARZA - PRAWY DOLNY RÓG ===== */
+/* ===== AKCJE KOMENTARZA ===== */
 .rop-reply-actions {
     position: absolute;
     bottom: 15px;
@@ -812,7 +811,7 @@ textarea.rop-form-control {
     height: 16px;
 }
 
-/* ANIMACJA USUWANIA */
+/* ===== ANIMACJA USUWANIA ===== */
 .rop-reply-item.deleting {
     opacity: 0.5;
     pointer-events: none;
@@ -843,7 +842,7 @@ textarea.rop-form-control {
     font-size: 14px;
 }
 
-/* ===== PROFILE FORM ===== */
+/* ===== PROFIL ===== */
 .rop-company-profile-form {
     padding: 20px;
     background: #ffffff;
@@ -909,7 +908,7 @@ textarea.rop-form-control {
     transition: opacity var(--transition-medium);
 }
 
-/* ===== PRZYCISK USUWANIA LOGO - NOWY STYL ===== */
+/* ===== PRZYCISK USUWANIA LOGO ===== */
 .rop-logo-delete {
     position: absolute;
     top: 50%;
@@ -944,7 +943,7 @@ textarea.rop-form-control {
     color: white !important;
 }
 
-/* ===== NEW TOPIC & REPLY FORMS ===== */
+/* ===== NOWY TEMAT I FORMULARZ ODPOWIEDZI ===== */
 .rop-new-topic-form,
 .rop-reply-form {
     padding: 20px 0;
@@ -982,7 +981,7 @@ textarea.rop-form-control {
     margin-top: 30px;
 }
 
-/* ===== LOADING & MESSAGES ===== */
+/* ===== ŁADOWANIE I WIADOMOŚCI ===== */
 .rop-loading {
     text-align: center;
     padding: 40px 20px;
@@ -1015,6 +1014,26 @@ textarea.rop-form-control {
 .rop-icon-heart::before,
 .rop-icon-heart-outline::before {
     display: none !important;
+}
+
+
+/* ===== LOGA W WIADOMOŚCIACH ===== */
+.rop-company-logo {
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    transition: all 0.3s ease !important;
+}
+
+.bm-pic .rop-company-logo,
+.better-messages-avatar .rop-company-logo {
+    width: 100% !important;
+    height: 100% !important;
+    border: 2px solid var(--border-light) !important;
+}
+
+.rop-company-logo:hover {
+    transform: scale(1.05) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
 }
 
 /* ===== ANIMACJE ===== */
@@ -1244,23 +1263,4 @@ textarea.rop-form-control {
     .rop-reply-form textarea.rop-form-control {
         min-height: 120px;
     }
-}
-
-/* ===== COMPANY LOGOS IN BETTER MESSAGES ===== */
-.rop-company-logo {
-    border-radius: 50% !important;
-    object-fit: cover !important;
-    transition: all 0.3s ease !important;
-}
-
-.bm-pic .rop-company-logo,
-.better-messages-avatar .rop-company-logo {
-    width: 100% !important;
-    height: 100% !important;
-    border: 2px solid var(--border-light) !important;
-}
-
-.rop-company-logo:hover {
-    transform: scale(1.05) !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
 }

@@ -8,7 +8,7 @@
             this.initForumPopup();
             this.initNewTopicPopup();
             this.initReplyPopup();
-            this.initMessagesPanel(); // Nowa funkcja
+            this.initMessagesPanel();
             console.log('ROP Panel initialized');
             this.autoLoadProfile();
         },
@@ -68,48 +68,40 @@
             });
         },
 
-        // Nowa funkcja do panelu wiadomości
         loadMessagesTab: function () {
-    var self = this;
-    this.setActiveTab('messages');
+            var self = this;
+            this.setActiveTab('messages');
 
-    // pokaż info o ładowaniu
-    $(document).on('click', '#rop-messages', function(e) {
-    e.preventDefault();
-
-    // Ukryj panel główny
-    $('#panel-container').hide();
-
-    // Pokaż panel z wiadomościami
-    $('#messages-rop').show();
-
-    console.log('Przełączono na wiadomości');
-});
+            $(document).on('click', '#rop-messages', function (e) {
+                e.preventDefault();
+                $('#panel-container').hide();
+                $('#messages-rop').show();
+                console.log('Przełączono na wiadomości');
+            });
 
 
-    
-    console.log('Messages panel loaded with [better_messages] shortcode');
-},
+
+            console.log('Messages panel loaded with [better_messages] shortcode');
+        },
 
 
         setActiveTab: function (tabName) {
             $('.rop-tab').removeClass('active');
             if (tabName === 'profile') {
                 $('#company-profile').addClass('active');
-				$('#panel-container').show();
-				$('#messages-rop').hide();
+                $('#panel-container').show();
+                $('#messages-rop').hide();
             } else if (tabName === 'forum') {
                 $('#rop-forum').addClass('active');
-				$('#panel-container').show();
-				$('#messages-rop').hide();
+                $('#panel-container').show();
+                $('#messages-rop').hide();
             } else if (tabName === 'messages') {
                 $('#rop-messages').addClass('active');
-				$('#panel-container').hide();
-				$('#messages-rop').show();
+                $('#panel-container').hide();
+                $('#messages-rop').show();
             }
         },
-
-        // Nowa funkcja inicjalizująca panel wiadomości
+        
         initMessagesPanel: function () {
             var self = this;
 
@@ -149,43 +141,43 @@
             });
         },
 
-        initForumManager: function() {
+        initForumManager: function () {
             var self = this;
 
-            $(document).on('click', '#rop-forum', function(e) {
+            $(document).on('click', '#rop-forum', function (e) {
                 e.preventDefault();
                 console.log('Forum tab clicked');
                 self.loadForumTab();
             });
 
-            $(document).on('change', '#rop-forum-category, #rop-forum-sort', function() {
+            $(document).on('change', '#rop-forum-category, #rop-forum-sort', function () {
                 console.log('Filter changed');
                 self.filterForumTopics();
             });
 
-            $(document).on('click', '#rop-new-topic', function() {
+            $(document).on('click', '#rop-new-topic', function () {
                 console.log('New topic clicked');
                 self.openNewTopicPopup();
             });
 
-            $(document).on('click', '#rop-first-topic', function() {
+            $(document).on('click', '#rop-first-topic', function () {
                 console.log('First topic clicked');
                 var forumId = $(this).data('forum-id') || 0;
                 self.openNewTopicPopup(forumId);
             });
 
-            $(document).on('click', '#rop-load-more-topics', function() {
+            $(document).on('click', '#rop-load-more-topics', function () {
                 self.loadMoreTopics();
             });
 
-            $(document).on('click', '.rop-like-btn', function(e) {
+            $(document).on('click', '.rop-like-btn', function (e) {
                 e.stopPropagation();
                 var topicId = $(this).data('topic-id');
                 console.log('Like button clicked for topic:', topicId);
                 self.toggleTopicLike(topicId, $(this));
             });
 
-            $(document).on('click', '.rop-topic-item', function(e) {
+            $(document).on('click', '.rop-topic-item', function (e) {
                 if ($(e.target).closest('.rop-like-btn').length > 0) {
                     return;
                 }
@@ -350,50 +342,50 @@
             console.log('Loading more topics...');
         },
 
-        initForumPopup: function() {
+        initForumPopup: function () {
             var self = this;
 
-            $(document).on('click', '#rop-forum-popup-overlay', function(e) {
+            $(document).on('click', '#rop-forum-popup-overlay', function (e) {
                 if (e.target === this) {
                     self.closeForumPopup();
                 }
             });
 
-            $(document).on('click', '#rop-popup-reply', function() {
+            $(document).on('click', '#rop-popup-reply', function () {
                 var topicId = $('#rop-popup-like-btn').data('topic-id');
                 if (topicId) {
                     self.openReplyPopup(topicId);
                 }
             });
 
-            $(document).on('click', '#rop-popup-like-btn', function() {
+            $(document).on('click', '#rop-popup-like-btn', function () {
                 var topicId = $(this).data('topic-id');
                 self.togglePopupLike(topicId);
             });
 
-            $(document).on('click', '#rop-popup-comment-btn', function() {
+            $(document).on('click', '#rop-popup-comment-btn', function () {
                 var topicId = $(this).data('topic-id');
                 self.showTopicReplies(topicId);
             });
 
-            $(document).on('click', '#rop-back-to-post', function() {
+            $(document).on('click', '#rop-back-to-post', function () {
                 self.showPostContent();
             });
 
-            $(document).on('click', '.rop-replies-page-btn', function() {
+            $(document).on('click', '.rop-replies-page-btn', function () {
                 var topicId = $(this).data('topic-id');
                 var page = $(this).data('page');
                 self.loadRepliesPage(topicId, page);
             });
 
-            $(document).on('click', '.rop-delete-reply-btn', function(e) {
+            $(document).on('click', '.rop-delete-reply-btn', function (e) {
                 e.stopPropagation();
                 var replyId = $(this).data('reply-id');
                 console.log('Delete reply clicked for:', replyId);
                 self.deleteReply(replyId, $(this));
             });
 
-            $(document).on('click', '#rop-popup-delete-btn', function() {
+            $(document).on('click', '#rop-popup-delete-btn', function () {
                 var topicId = $(this).data('topic-id');
                 console.log('Delete topic from popup clicked for:', topicId);
                 self.deleteTopic(topicId, $(this));
@@ -445,7 +437,7 @@
             });
         },
 
-        deleteReply: function(replyId, $button) {
+        deleteReply: function (replyId, $button) {
             var self = this;
 
             if (!replyId) {
@@ -468,10 +460,10 @@
                     reply_id: replyId,
                     nonce: rop_panel_ajax.nonce
                 },
-                success: function(response) {
+                success: function (response) {
                     console.log('Delete reply response:', response);
                     if (response.success) {
-                        $('.rop-reply-item[data-reply-id="' + replyId + '"]').fadeOut(300, function() {
+                        $('.rop-reply-item[data-reply-id="' + replyId + '"]').fadeOut(300, function () {
                             $(this).remove();
 
                             if ($('.rop-reply-item').length === 0) {
@@ -511,18 +503,18 @@
                         alert('Błąd: ' + (response.data || 'Nie udało się usunąć odpowiedzi'));
                     }
                 },
-                error: function(xhr, status, error) {
+                error: function (xhr, status, error) {
                     console.error('Delete reply AJAX error:', xhr.responseText);
                     $('.rop-reply-item[data-reply-id="' + replyId + '"]').removeClass('deleting');
                     alert('Wystąpił błąd podczas usuwania odpowiedzi');
                 },
-                complete: function() {
+                complete: function () {
                     $button.prop('disabled', false);
                 }
             });
         },
 
-        populateForumPopup: function(data) {
+        populateForumPopup: function (data) {
             console.log('Populating forum popup with data:', data);
 
             $('#rop-popup-title').text(data.title);
@@ -670,11 +662,11 @@
             });
         },
 
-        populateReplies: function(data, topicId) {
+        populateReplies: function (data, topicId) {
             var repliesHtml = '';
 
             if (data.replies && data.replies.length > 0) {
-                data.replies.forEach(function(reply) {
+                data.replies.forEach(function (reply) {
                     repliesHtml += '<div class="rop-reply-item" data-reply-id="' + reply.id + '">';
                     repliesHtml += '<div class="rop-reply-author">';
                     repliesHtml += '<div class="rop-reply-avatar">';
@@ -841,7 +833,7 @@
             });
         },
 
-        deleteTopic: function(topicId, $button) {
+        deleteTopic: function (topicId, $button) {
             var self = this;
 
             if (!topicId) {
@@ -863,7 +855,7 @@
                     topic_id: topicId,
                     nonce: rop_panel_ajax.nonce
                 },
-                success: function(response) {
+                success: function (response) {
                     console.log('Delete topic response:', response);
                     if (response.success) {
                         self.closeForumPopup();
@@ -882,7 +874,7 @@
                         }
                     }
                 },
-                error: function(xhr, status, error) {
+                error: function (xhr, status, error) {
                     console.error('Delete topic AJAX error:', xhr, status, error);
                     if ($('#rop-forum-popup-overlay').is(':visible')) {
                         self.showForumError('Wystąpił błąd podczas usuwania tematu');
@@ -890,7 +882,7 @@
                         self.showContainerError('Wystąpił błąd podczas usuwania tematu');
                     }
                 },
-                complete: function() {
+                complete: function () {
                     $button.prop('disabled', false);
                 }
             });
@@ -928,36 +920,36 @@
             });
         },
 
-        initReplyPopup: function() {
+        initReplyPopup: function () {
             var self = this;
 
-            $(document).on('click', '.rop-reply-close', function() {
+            $(document).on('click', '.rop-reply-close', function () {
                 self.closeReplyPopup();
             });
 
-            $(document).on('click', '#rop-reply-popup-overlay', function(e) {
+            $(document).on('click', '#rop-reply-popup-overlay', function (e) {
                 if (e.target === this) {
                     self.closeReplyPopup();
                 }
             });
 
-            $(document).on('keydown', function(e) {
+            $(document).on('keydown', function (e) {
                 if (e.keyCode === 27 && $('#rop-reply-popup-overlay').is(':visible')) {
                     self.closeReplyPopup();
                 }
             });
 
-            $(document).on('submit', '#rop-reply-form', function(e) {
+            $(document).on('submit', '#rop-reply-form', function (e) {
                 e.preventDefault();
                 self.submitReply();
             });
 
-            $(document).on('click', '#rop-cancel-reply', function() {
+            $(document).on('click', '#rop-cancel-reply', function () {
                 self.closeReplyPopup();
             });
         },
 
-        openReplyPopup: function(topicId) {
+        openReplyPopup: function (topicId) {
             var self = this;
 
             if (!topicId) {
@@ -972,12 +964,12 @@
 
             $('#rop-reply-popup-overlay').fadeIn(300);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 $('#reply_content').focus();
             }, 400);
         },
 
-        submitReply: function() {
+        submitReply: function () {
             var self = this;
             var $form = $('#rop-reply-form');
             var $submitBtn = $('#rop-submit-reply');
@@ -1006,7 +998,7 @@
                     reply_content: content,
                     nonce: rop_panel_ajax.nonce
                 },
-                success: function(response) {
+                success: function (response) {
                     console.log('Create reply response:', response);
                     if (response.success) {
                         self.showReplySuccess(response.data.message || 'Odpowiedź została dodana pomyślnie!');
@@ -1029,7 +1021,7 @@
 
                         $('#reply_content').val('');
 
-                        setTimeout(function() {
+                        setTimeout(function () {
                             self.closeReplyPopup();
 
                             if ($('#rop-popup-replies').is(':visible')) {
@@ -1040,27 +1032,27 @@
                         self.showReplyError(response.data || 'Błąd podczas dodawania odpowiedzi');
                     }
                 },
-                error: function(xhr, status, error) {
+                error: function (xhr, status, error) {
                     console.error('AJAX Error:', xhr.responseText);
                     self.showReplyError('Wystąpił błąd połączenia');
                 },
-                complete: function() {
+                complete: function () {
                     $submitBtn.prop('disabled', false).text('Dodaj odpowiedź');
                 }
             });
         },
 
-        closeReplyPopup: function() {
+        closeReplyPopup: function () {
             $('#rop-reply-popup-overlay').fadeOut(300);
         },
 
-        showReplyError: function(message) {
+        showReplyError: function (message) {
             var errorHtml = '<div class="rop-error" style="background: #f8d7da; color: #721c24; padding: 12px; border-radius: 4px; margin-bottom: 20px;">' + message + '</div>';
             $('.rop-error, .rop-success').remove();
             $('#rop-reply-content').prepend(errorHtml);
         },
 
-        showReplySuccess: function(message) {
+        showReplySuccess: function (message) {
             var successHtml = '<div class="rop-success" style="background: #d4edda; color: #155724; padding: 12px; border-radius: 4px; margin-bottom: 20px;">' + message + '</div>';
             $('.rop-error, .rop-success').remove();
             $('#rop-reply-content').prepend(successHtml);

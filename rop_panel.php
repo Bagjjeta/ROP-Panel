@@ -1,32 +1,28 @@
 <?php
 /**
  * Plugin Name: ROP Panel
- * Plugin URI: https://yourwebsite.com
- * Description: Kompletny panel członka z funkcjonalnościami forum popup i edycji profilu firmowego. Kompatybilny z bbPress i Ultimate Members.
+ * Plugin URI: http://localhost/ROP/wordpress
+ * Description: Panel ROP
  * Version: 2.1.0
- * Author: Twoje Imię
+ * Author: ROP
  * Text Domain: rop_panel
  * Domain Path: /languages
  * Requires at least: 5.0
  * Tested up to: 6.3
  */
 
-// Zabezpieczenie przed bezpośrednim dostępem
 if (!defined('ABSPATH')) {
     exit;
 }
 
-// DODAJ DEBUGGING NA POCZĄTKU
 error_log('ROP DEBUG: Plugin file loaded');
 
-// Definiowanie stałych
 define('ROP_PANEL_VERSION', '2.1.0');
 define('ROP_PANEL_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('ROP_PANEL_PLUGIN_URL', plugin_dir_url(__FILE__));
 
 error_log('ROP DEBUG: Constants defined');
 
-// Główna klasa wtyczki
 class ROP_Panel_Main {
     
     public function __construct() {
@@ -39,10 +35,8 @@ class ROP_Panel_Main {
     
     public function init() {
         error_log('ROP DEBUG: init() called');
-        // Załaduj pliki
         $this->load_dependencies();
-        
-        // Inicjalizuj komponenty tylko jeśli pliki zostały załadowane
+
         if (class_exists('ROP_Panel_Core')) {
             new ROP_Panel_Core();
             error_log('ROP DEBUG: ROP_Panel_Core initialized');
@@ -62,8 +56,7 @@ class ROP_Panel_Main {
             new ROP_Panel_Delete_Manager();
             error_log('ROP DEBUG: ROP_Panel_Delete_Manager initialized');
         }
-        
-        // Forum popup tylko jeśli bbPress jest aktywny
+
         if (function_exists('bbp_get_version') && class_exists('ROP_Panel_Forum_Popup')) {
             new ROP_Panel_Forum_Popup();
             error_log('ROP DEBUG: ROP_Panel_Forum_Popup initialized');
@@ -73,7 +66,6 @@ class ROP_Panel_Main {
     public function load_dependencies() {
         error_log('ROP DEBUG: load_dependencies() called');
         
-        // Lista plików do załadowania
         $files = array(
             'includes/class-rop-panel-core.php',
             'includes/class-rop-panel-profile-editor.php',
@@ -100,21 +92,18 @@ class ROP_Panel_Main {
     
     public function activate() {
         error_log('ROP DEBUG: Plugin activated');
-        // Sprawdź czy folder includes istnieje
         $includes_dir = ROP_PANEL_PLUGIN_DIR . 'includes';
         if (!file_exists($includes_dir)) {
             wp_mkdir_p($includes_dir);
         }
-        
-        // Sprawdź czy folder assets istnieje
+
         $assets_dir = ROP_PANEL_PLUGIN_DIR . 'assets';
         if (!file_exists($assets_dir)) {
             wp_mkdir_p($assets_dir);
             wp_mkdir_p($assets_dir . '/css');
             wp_mkdir_p($assets_dir . '/js');
         }
-        
-        // Utwórz folder dla uploadu logo firm
+
         $upload_dir = wp_upload_dir();
         $rop_upload_dir = $upload_dir['basedir'] . '/rop_panel/company_logos';
         
@@ -131,7 +120,5 @@ class ROP_Panel_Main {
     }
 }
 
-// Uruchom wtyczkę
-error_log('ROP DEBUG: About to initialize ROP_Panel_Main');
 new ROP_Panel_Main();
 error_log('ROP DEBUG: ROP_Panel_Main initialized');

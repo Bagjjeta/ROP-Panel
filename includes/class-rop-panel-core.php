@@ -11,7 +11,6 @@ class ROP_Panel_Core {
     }
     
     public function enqueue_scripts() {
-        // CSS - sprawdź czy plik istnieje
         $css_file = ROP_PANEL_PLUGIN_URL . 'assets/css/rop-panel.css';
         if (file_exists(ROP_PANEL_PLUGIN_DIR . 'assets/css/rop-panel.css')) {
             wp_enqueue_style(
@@ -21,8 +20,7 @@ class ROP_Panel_Core {
                 ROP_PANEL_VERSION
             );
         }
-        
-        // JavaScript - sprawdź czy plik istnieje
+
         $js_file = ROP_PANEL_PLUGIN_URL . 'assets/js/rop-panel.js';
         if (file_exists(ROP_PANEL_PLUGIN_DIR . 'assets/js/rop-panel.js')) {
             wp_enqueue_script(
@@ -32,8 +30,7 @@ class ROP_Panel_Core {
                 ROP_PANEL_VERSION,
                 true
             );
-            
-            // Lokalizacja dla AJAX
+
             wp_localize_script('rop-panel-js', 'rop_panel_ajax', array(
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce('rop_panel_nonce'),
@@ -46,7 +43,6 @@ class ROP_Panel_Core {
             ));
         }
 
-        // Avatar Replacer for Better Messages
         $avatar_js_file = ROP_PANEL_PLUGIN_URL . 'assets/js/avatar-replacer.js';
         if (file_exists(ROP_PANEL_PLUGIN_DIR . 'assets/js/avatar-replacer.js')) {
             wp_enqueue_script(
@@ -56,19 +52,16 @@ class ROP_Panel_Core {
                 ROP_PANEL_VERSION,
                 true
             );
-            
-            // Lokalizacja dla Avatar Replacer
+
             wp_localize_script('rop-avatar-replacer', 'rop_ajax', array(
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce('rop_panel_nonce')
             ));
         }
     }
-    
-    // ZAKTUALIZOWANY - dodany popup odpowiedzi
+
     public function render_popups() {
         ?>
-        <!-- Forum Popup - dla postów forum -->
         <div id="rop-forum-popup-overlay" class="rop-popup-overlay" style="display: none;">
             <div class="rop-popup-container">
                 <div class="rop-popup-header">
@@ -119,10 +112,8 @@ class ROP_Panel_Core {
                             <button class="rop-back-to-post" id="rop-back-to-post">← Powrót do posta</button>
                         </div>
                         <div class="rop-replies-content" id="rop-replies-content">
-                            <!-- Komentarze będą tutaj -->
                         </div>
                         <div class="rop-replies-pagination" id="rop-replies-pagination">
-                            <!-- Paginacja będzie tutaj -->
                         </div>
                     </div>
                 </div>
@@ -134,7 +125,7 @@ class ROP_Panel_Core {
             </div>
         </div>
 
-        <!-- NEW TOPIC POPUP -->
+        <!-- POPUP TEMATY -->
         <div id="rop-new-topic-popup-overlay" class="rop-popup-overlay" style="display: none;">
             <div class="rop-popup-container">
                 <div class="rop-popup-header">
@@ -151,7 +142,7 @@ class ROP_Panel_Core {
             </div>
         </div>
 
-        <!-- NOWY - REPLY POPUP -->
+        <!-- ODPOWIEDZI -->
         <div id="rop-reply-popup-overlay" class="rop-popup-overlay" style="display: none;">
             <div class="rop-popup-container">
                 <div class="rop-popup-header">

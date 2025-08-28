@@ -13,7 +13,6 @@ class ROP_Forum_Popup {
     }
     
     public function enqueue_scripts() {
-        // CSS
         wp_enqueue_style(
             'rop-forum-popup-css',
             ROP_FORUM_POPUP_PLUGIN_URL . 'assets/css/popup-styles.css',
@@ -21,7 +20,6 @@ class ROP_Forum_Popup {
             ROP_FORUM_POPUP_VERSION
         );
         
-        // JavaScript
         wp_enqueue_script(
             'rop-forum-popup-js',
             ROP_FORUM_POPUP_PLUGIN_URL . 'assets/js/popup-script.js',
@@ -29,8 +27,7 @@ class ROP_Forum_Popup {
             ROP_FORUM_POPUP_VERSION,
             true
         );
-        
-        // Lokalizacja dla AJAX
+
         wp_localize_script('rop-forum-popup-js', 'rop_forum_popup_ajax', array(
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('rop_forum_popup_nonce'),
@@ -40,7 +37,6 @@ class ROP_Forum_Popup {
     }
     
     public function modify_topic_links($permalink, $topic_id) {
-        // Dodaj atrybut data-topic-id do linków tematów
         if (is_main_query() && !is_admin()) {
             return add_query_arg('popup', '1', $permalink);
         }
@@ -48,7 +44,6 @@ class ROP_Forum_Popup {
     }
     
     public function modify_reply_links($permalink, $reply_id) {
-        // Dodaj atrybut data-reply-id do linków odpowiedzi
         if (is_main_query() && !is_admin()) {
             return add_query_arg('popup', '1', $permalink);
         }

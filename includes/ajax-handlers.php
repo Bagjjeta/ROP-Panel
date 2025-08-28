@@ -294,9 +294,6 @@ function load_messages_panel() {
 add_action('wp_ajax_rop_load_messages_panel', 'load_messages_panel');
 add_action('wp_ajax_nopriv_rop_load_messages_panel', 'load_messages_panel');
 
-add_action('wp_ajax_rop_get_company_logo', array($ajax_handlers, 'get_company_logo'));
-add_action('wp_ajax_nopriv_rop_get_company_logo', array($ajax_handlers, 'get_company_logo'));
-
 error_log('ROP DEBUG: AJAX functions registered at ' . current_time('Y-m-d H:i:s'));
 
 class ROP_Panel_Ajax {
@@ -312,6 +309,12 @@ class ROP_Panel_Ajax {
         
         add_action('wp_ajax_rop_get_topic_replies', array($this, 'get_topic_replies'));
         add_action('wp_ajax_nopriv_rop_get_topic_replies', array($this, 'get_topic_replies'));
+		
+		add_action('wp_ajax_rop_get_company_logo', array($this, 'get_company_logo'));
+		add_action('wp_ajax_nopriv_rop_get_company_logo', array($this, 'get_company_logo'));
+		
+		add_action('wp_ajax_rop_get_user_id_by_username', array($this, 'get_user_id_by_username'));
+		add_action('wp_ajax_nopriv_rop_get_user_id_by_username', array($this, 'get_user_id_by_username'));
         
         error_log('ROP DEBUG: All AJAX actions registered in class');
     }
@@ -730,9 +733,6 @@ class ROP_Panel_Ajax {
         return true;
     }
 
-    /**
- * Pobiera logo firmy dla użytkownika (AJAX)
- */
 public function get_company_logo() {
     if (!wp_verify_nonce($_POST['nonce'], 'rop_panel_nonce')) {
         wp_send_json_error('Błąd bezpieczeństwa');
@@ -754,6 +754,37 @@ public function get_company_logo() {
         wp_send_json_error('Brak logo firmy');
     }
 }
+
+public function get_user_id_by_username() {
+    if (!wp_verify_nonce($_POST['nonce'], 'rop_panel_nonce')) {
+        wp_send_json_error('Błąd bezpieczeństwa');
+    }
+    
+    $username = sanitize_text_field($_POST['username']);
+    if (!$username) {
+        wp_send_json_error('Nieprawidłowa nazwa użytkownika');
+    }
+    
+    $user = get_user_by('display_name', $username);
+
+    if (!$user) {
+        $user = get_user_by('login', $username);
+    }
+
+    if (!$user) {
+        $user = get_user_by('slug', $username);
+    }
+    
+    if ($user) {
+        wp_send_json_success(array(
+            'user_id' => $user->ID,
+            'username' => $username
+        ));
+    } else {
+        wp_send_json_error('Nie znaleziono użytkownika');
+    }
+}
+
 }
 
 new ROP_Panel_Ajax();

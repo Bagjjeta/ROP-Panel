@@ -14,11 +14,7 @@ class ROP_Panel_Forum_Manager
         add_action('wp_ajax_rop_create_new_topic', array($this, 'create_new_topic'));
         add_action('wp_ajax_rop_toggle_topic_like', array($this, 'toggle_topic_like'));
         add_action('wp_ajax_nopriv_rop_toggle_topic_like', array($this, 'toggle_topic_like'));
-        
-        // Dodajemy filtr do modyfikacji awatara w Better Messages
         add_filter('get_avatar', array($this, 'replace_avatar_with_company_logo'), 999, 5);
-        // AJAX handlers
-        
     }
     
     /**
@@ -32,19 +28,15 @@ class ROP_Panel_Forum_Manager
      * @return string HTML z awatarem lub logo firmy
      */
     public function replace_avatar_with_company_logo($avatar, $user_id, $size, $default, $alt) {
-        // Upewnij się, że mamy ID użytkownika jako liczbę
         if (is_object($user_id)) {
             $user_id = $user_id->ID;
         } else {
             $user_id = (int) $user_id;
         }
-        
-        // Sprawdź, czy jesteśmy w kontekście Better Messages
+
         if ($this->is_better_messages_context()) {
-            // Pobierz logo firmy
             $company_logo = get_user_meta($user_id, 'rop_company_logo', true);
-            
-            // Jeśli logo firmy istnieje, użyj go zamiast standardowego awatara
+
             if (!empty($company_logo) && file_exists(str_replace(home_url(), ABSPATH, $company_logo))) {
                 $avatar_html = sprintf(
                     '<img src="%s" alt="%s" class="avatar avatar-%s photo" height="%s" width="%s" style="border-radius: 50%%; object-fit: cover;" />',
@@ -58,25 +50,18 @@ class ROP_Panel_Forum_Manager
                 return $avatar_html;
             }
         }
-        
-        // Jeśli nie jesteśmy w Better Messages lub nie ma logo firmy, zwróć oryginalny awatar
+
         return $avatar;
     }
-    
-    /**
- * Sprawdza czy jesteśmy w kontekście Better Messages
- */
+
 private function is_better_messages_context() {
-    // Sprawdź czy Better Messages jest aktywny
     if (!class_exists('Better_Messages')) {
         return false;
     }
-    
-    // Sprawdź różne konteksty Better Messages
+
     $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 15);
     foreach ($backtrace as $trace) {
         if (isset($trace['file'])) {
-            // Sprawdź czy wywołanie pochodzi z Better Messages
             if (strpos($trace['file'], 'better-messages') !== false) {
                 return true;
             }
@@ -86,7 +71,6 @@ private function is_better_messages_context() {
         }
         
         if (isset($trace['class'])) {
-            // Sprawdź czy klasa należy do Better Messages
             if (strpos($trace['class'], 'Better_Messages') !== false) {
                 return true;
             }
@@ -95,8 +79,7 @@ private function is_better_messages_context() {
             }
         }
     }
-    
-    // Sprawdź czy jesteśmy na stronie z Better Messages
+
     global $wp;
     if (isset($wp->request)) {
         if (strpos($wp->request, 'messages') !== false || 
@@ -104,8 +87,7 @@ private function is_better_messages_context() {
             return true;
         }
     }
-    
-    // Sprawdź AJAX actions dla Better Messages
+
     if (defined('DOING_AJAX') && DOING_AJAX) {
         $action = isset($_POST['action']) ? $_POST['action'] : '';
         if (strpos($action, 'better_messages') !== false || 
