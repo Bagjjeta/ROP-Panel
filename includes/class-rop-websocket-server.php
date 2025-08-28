@@ -3,63 +3,86 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+require_once __DIR__ . 'C:/xampp/htdocs/ROP/wordpress/wp-load.php';
+
 use Ratchet\Server\IoServer;
 use Ratchet\Http\HttpServer;
 use Ratchet\WebSocket\WsServer;
 use Ratchet\MessageComponentInterface;
 use Ratchet\ConnectionInterface;
 
-class ROP_WebSocket_Server implements MessageComponentInterface {
+class ROP_WebSocket_Server implements MessageComponentInterface
+{
     protected $clients;
     protected $users;
     protected $conversations;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->clients = new \SplObjectStorage;
         $this->users = array();
         $this->conversations = array();
     }
 
-    public function onOpen(ConnectionInterface $conn) {
+    public function onOpen(ConnectionInterface $conn)
+    {
         $this->clients->attach($conn);
         echo "New connection! ({$conn->resourceId})\n";
     }
 
-    public function onMessage(ConnectionInterface $from, $msg) {
+    // server/server.php (wewnątrz klasy RopPanelChat)
+
+    public function onMessage(ConnectionInterface $from, $msg)
+    {
         $data = json_decode($msg, true);
-        
-        if (!$data) {
-            return;
+
+        // Sprawdź, czy połączenie już jest autoryzowane
+        if (!isset($this->clients[$from])) {
+            // Jeśli nie, to musi być wiadomość autoryzacyjna
+            if (isset($data['type']) && $data['type'] === 'auth' && isset($data['nonce']) && isset($data['user_id'])) {
+
+                // 1. Zweryfikuj nonce
+                if (wp_verify_nonce($data['nonce'], 'rop_panel_nonce')) {
+
+                    // 2. Ustaw aktualnego użytkownika
+                    $user = get_user_by('id', $data['user_id']);
+                    if ($user) {
+                        wp_set_current_user($data['user_id']);
+
+                        // 3. Zapisz połączenie jako autoryzowane
+                        $this->clients[$from] = ['user_id' => $data['user_id'], 'conn' => $from];
+
+                        // 4. Wyślij potwierdzenie autoryzacji
+                        $from->send(json_encode(['type' => 'auth_success']));
+                        echo "User {$data['user_id']} connected successfully.\n";
+
+                        // Po udanej autoryzacji przerwij dalsze wykonywanie tej funkcji
+                        return;
+                    }
+                }
+
+                // Jeśli nonce lub user_id są nieprawidłowe - wyślij błąd i zamknij połączenie
+                $from->send(json_encode(['type' => 'auth_failed']));
+                $from->close();
+                echo "Authentication failed. Connection closed.\n";
+            } else {
+                // Jeśli pierwsza wiadomość nie jest autoryzacją - zamknij połączenie
+                $from->close();
+            }
+            return; // Zakończ, jeśli autoryzacja się nie powiodła
         }
 
-        switch ($data['type']) {
-            case 'auth':
-                $this->handleAuth($from, $data);
-                break;
-            case 'send_message':
-                $this->handleSendMessage($from, $data);
-                break;
-            case 'get_conversations':
-                $this->handleGetConversations($from, $data);
-                break;
-            case 'get_messages':
-                $this->handleGetMessages($from, $data);
-                break;
-            case 'mark_read':
-                $this->handleMarkRead($from, $data);
-                break;
-            case 'typing_start':
-                $this->handleTypingStart($from, $data);
-                break;
-            case 'typing_stop':
-                $this->handleTypingStop($from, $data);
-                break;
-        }
+        // Jeśli doszło tutaj, to znaczy, że połączenie jest autoryzowane
+        // i można przetwarzać inne typy wiadomości (np. 'send_message')
+
+        // ... Twoja reszta logiki dla wysyłania wiadomości ...
+        // (Pamiętaj, aby ją dostosować do nowej struktury)
     }
 
-    public function onClose(ConnectionInterface $conn) {
+    public function onClose(ConnectionInterface $conn)
+    {
         $this->clients->detach($conn);
-        
+
         // Usuń użytkownika z listy online
         foreach ($this->users as $userId => $connection) {
             if ($connection === $conn) {
@@ -68,28 +91,30 @@ class ROP_WebSocket_Server implements MessageComponentInterface {
                 break;
             }
         }
-        
+
         echo "Connection {$conn->resourceId} has disconnected\n";
     }
 
-    public function onError(ConnectionInterface $conn, \Exception $e) {
+    public function onError(ConnectionInterface $conn, \Exception $e)
+    {
         echo "An error has occurred: {$e->getMessage()}\n";
         $conn->close();
     }
 
-    private function handleAuth($from, $data) {
+    private function handleAuth($from, $data)
+    {
         $token = $data['token'] ?? '';
         $userId = $this->validateToken($token);
-        
+
         if ($userId) {
             $this->users[$userId] = $from;
             $from->userId = $userId;
-            
+
             $this->sendToUser($from, [
                 'type' => 'auth_success',
                 'user_id' => $userId
             ]);
-            
+
             $this->broadcastUserStatus($userId, 'online');
         } else {
             $this->sendToUser($from, [
@@ -99,7 +124,8 @@ class ROP_WebSocket_Server implements MessageComponentInterface {
         }
     }
 
-    private function handleSendMessage($from, $data) {
+    private function handleSendMessage($from, $data)
+    {
         if (!isset($from->userId)) {
             return;
         }
@@ -123,7 +149,7 @@ class ROP_WebSocket_Server implements MessageComponentInterface {
 
         // Zapisz wiadomość do bazy danych
         $messageId = $this->saveMessage($conversationId, $from->userId, $message);
-        
+
         if ($messageId) {
             $messageData = [
                 'type' => 'new_message',
@@ -146,20 +172,22 @@ class ROP_WebSocket_Server implements MessageComponentInterface {
         }
     }
 
-    private function handleGetConversations($from, $data) {
+    private function handleGetConversations($from, $data)
+    {
         if (!isset($from->userId)) {
             return;
         }
 
         $conversations = $this->getUserConversations($from->userId);
-        
+
         $this->sendToUser($from, [
             'type' => 'conversations_list',
             'conversations' => $conversations
         ]);
     }
 
-    private function handleGetMessages($from, $data) {
+    private function handleGetMessages($from, $data)
+    {
         if (!isset($from->userId)) {
             return;
         }
@@ -173,7 +201,7 @@ class ROP_WebSocket_Server implements MessageComponentInterface {
         }
 
         $messages = $this->getConversationMessages($conversationId, $page, $limit);
-        
+
         $this->sendToUser($from, [
             'type' => 'messages_list',
             'conversation_id' => $conversationId,
@@ -182,25 +210,27 @@ class ROP_WebSocket_Server implements MessageComponentInterface {
         ]);
     }
 
-    private function handleMarkRead($from, $data) {
+    private function handleMarkRead($from, $data)
+    {
         if (!isset($from->userId)) {
             return;
         }
 
         $conversationId = $data['conversation_id'] ?? 0;
-        
+
         if ($conversationId) {
             $this->markConversationAsRead($conversationId, $from->userId);
         }
     }
 
-    private function handleTypingStart($from, $data) {
+    private function handleTypingStart($from, $data)
+    {
         if (!isset($from->userId)) {
             return;
         }
 
         $conversationId = $data['conversation_id'] ?? 0;
-        
+
         if ($conversationId) {
             $participants = $this->getConversationParticipants($conversationId);
             foreach ($participants as $participantId) {
@@ -216,13 +246,14 @@ class ROP_WebSocket_Server implements MessageComponentInterface {
         }
     }
 
-    private function handleTypingStop($from, $data) {
+    private function handleTypingStop($from, $data)
+    {
         if (!isset($from->userId)) {
             return;
         }
 
         $conversationId = $data['conversation_id'] ?? 0;
-        
+
         if ($conversationId) {
             $participants = $this->getConversationParticipants($conversationId);
             foreach ($participants as $participantId) {
@@ -237,13 +268,14 @@ class ROP_WebSocket_Server implements MessageComponentInterface {
         }
     }
 
-    private function validateToken($token) {
+    private function validateToken($token)
+    {
         // Zweryfikuj token JWT lub session token
         // Zwróć user ID jeśli token jest prawidłowy
-        
+
         // Przykład z WordPress session
         global $wpdb;
-        
+
         $userId = $wpdb->get_var($wpdb->prepare(
             "SELECT user_id FROM {$wpdb->usermeta} 
              WHERE meta_key = 'rop_websocket_token' 
@@ -251,13 +283,14 @@ class ROP_WebSocket_Server implements MessageComponentInterface {
              AND user_id > 0",
             $token
         ));
-        
+
         return $userId ? intval($userId) : false;
     }
 
-    private function createConversation($userId1, $userId2) {
+    private function createConversation($userId1, $userId2)
+    {
         global $wpdb;
-        
+
         // Sprawdź czy konwersacja już istnieje
         $existingConv = $wpdb->get_var($wpdb->prepare(
             "SELECT conversation_id FROM {$wpdb->prefix}rop_conversation_participants 
@@ -265,7 +298,8 @@ class ROP_WebSocket_Server implements MessageComponentInterface {
              GROUP BY conversation_id 
              HAVING COUNT(DISTINCT user_id) = 2 
              AND COUNT(*) = 2",
-            $userId1, $userId2
+            $userId1,
+            $userId2
         ));
 
         if ($existingConv) {
@@ -305,9 +339,10 @@ class ROP_WebSocket_Server implements MessageComponentInterface {
         return $conversationId;
     }
 
-    private function saveMessage($conversationId, $senderId, $message) {
+    private function saveMessage($conversationId, $senderId, $message)
+    {
         global $wpdb;
-        
+
         $result = $wpdb->insert(
             $wpdb->prefix . 'rop_messages',
             [
@@ -332,9 +367,10 @@ class ROP_WebSocket_Server implements MessageComponentInterface {
         return false;
     }
 
-    private function getUserConversations($userId) {
+    private function getUserConversations($userId)
+    {
         global $wpdb;
-        
+
         $conversations = $wpdb->get_results($wpdb->prepare(
             "SELECT c.id, c.updated_at, 
                     GROUP_CONCAT(DISTINCT cp2.user_id) as participant_ids,
@@ -356,14 +392,14 @@ class ROP_WebSocket_Server implements MessageComponentInterface {
         foreach ($conversations as &$conv) {
             $participantIds = explode(',', $conv->participant_ids);
             $otherUserId = null;
-            
+
             foreach ($participantIds as $pid) {
                 if ($pid != $userId) {
                     $otherUserId = $pid;
                     break;
                 }
             }
-            
+
             if ($otherUserId) {
                 $conv->other_user_name = $this->getUserName($otherUserId);
                 $conv->other_user_avatar = $this->getUserAvatar($otherUserId);
@@ -374,11 +410,12 @@ class ROP_WebSocket_Server implements MessageComponentInterface {
         return $conversations;
     }
 
-    private function getConversationMessages($conversationId, $page = 1, $limit = 20) {
+    private function getConversationMessages($conversationId, $page = 1, $limit = 20)
+    {
         global $wpdb;
-        
+
         $offset = ($page - 1) * $limit;
-        
+
         $messages = $wpdb->get_results($wpdb->prepare(
             "SELECT m.*, u.display_name as sender_name
              FROM {$wpdb->prefix}rop_messages m
@@ -386,7 +423,9 @@ class ROP_WebSocket_Server implements MessageComponentInterface {
              WHERE m.conversation_id = %d
              ORDER BY m.sent_at DESC
              LIMIT %d OFFSET %d",
-            $conversationId, $limit, $offset
+            $conversationId,
+            $limit,
+            $offset
         ));
 
         foreach ($messages as &$message) {
@@ -396,9 +435,10 @@ class ROP_WebSocket_Server implements MessageComponentInterface {
         return array_reverse($messages);
     }
 
-    private function getConversationParticipants($conversationId) {
+    private function getConversationParticipants($conversationId)
+    {
         global $wpdb;
-        
+
         return $wpdb->get_col($wpdb->prepare(
             "SELECT user_id FROM {$wpdb->prefix}rop_conversation_participants 
              WHERE conversation_id = %d",
@@ -406,9 +446,10 @@ class ROP_WebSocket_Server implements MessageComponentInterface {
         ));
     }
 
-    private function markConversationAsRead($conversationId, $userId) {
+    private function markConversationAsRead($conversationId, $userId)
+    {
         global $wpdb;
-        
+
         $wpdb->update(
             $wpdb->prefix . 'rop_conversation_participants',
             ['last_read_at' => current_time('mysql')],
@@ -419,16 +460,19 @@ class ROP_WebSocket_Server implements MessageComponentInterface {
         );
     }
 
-    private function getUserName($userId) {
+    private function getUserName($userId)
+    {
         $user = get_userdata($userId);
         return $user ? $user->display_name : 'Unknown User';
     }
 
-    private function getUserAvatar($userId) {
+    private function getUserAvatar($userId)
+    {
         return get_avatar_url($userId, ['size' => 50]);
     }
 
-    private function broadcastUserStatus($userId, $status) {
+    private function broadcastUserStatus($userId, $status)
+    {
         $data = [
             'type' => 'user_status',
             'user_id' => $userId,
@@ -440,7 +484,8 @@ class ROP_WebSocket_Server implements MessageComponentInterface {
         }
     }
 
-    private function sendToUser($conn, $data) {
+    private function sendToUser($conn, $data)
+    {
         $conn->send(json_encode($data));
     }
 }
