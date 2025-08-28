@@ -172,15 +172,17 @@ class ROP_WebSocket_Server implements MessageComponentInterface
 
     private function handleGetConversations($from, $data)
     {
-        error_log('Getting conversations for user: ' . $from->userId); // Debug
+        error_log('🔍 Getting conversations for user: ' . ($from->userId ?? 'NO_USER_ID'));
 
         if (!isset($from->userId)) {
+            error_log('❌ No user ID set');
             return;
         }
 
         $conversations = $this->getUserConversations($from->userId);
 
-        error_log('Found conversations: ' . print_r($conversations, true)); // Debug
+        error_log('📋 Found ' . count($conversations) . ' conversations');
+        error_log('📋 Conversations data: ' . print_r($conversations, true));
 
         $this->sendToUser($from, [
             'type' => 'conversations_list',

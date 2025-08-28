@@ -260,55 +260,72 @@
             }
         },
 
-        loadConversations: function () {
-            if (this.messagesWS && this.messagesWS.readyState === WebSocket.OPEN) {
-                this.messagesWS.send(JSON.stringify({
+        loadConversations() {
+            console.log('📤 Requesting conversations...');
+            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                this.ws.send(JSON.stringify({
                     type: 'get_conversations'
                 }));
+            } else {
+                console.error('❌ WebSocket not connected');
             }
         },
 
-        displayConversations: function (conversations) {
-            const container = $('#rop-conversations-list');
+        displayConversations(conversations) {
+            const container = document.getElementById('rop-conversations-list');
+            if (!container) return;
 
             if (conversations.length === 0) {
-                container.html(`
+                container.innerHTML = `
             <div class="rop-no-conversations">
                 <i class="dashicons dashicons-format-chat"></i>
                 <p>Brak konwersacji</p>
+                <button class="rop-btn-primary" id="rop-new-conversation-btn">
+                    Rozpocznij nową konwersację
+                </button>
             </div>
-        `);
+        `;
+
+                // Poprawne bindowanie eventu
+                const newBtn = document.getElementById('rop-new-conversation-btn');
+                if (newBtn) {
+                    newBtn.addEventListener('click', () => this.openNewConversationDialog());
+                }
                 return;
             }
 
-            const conversationsHTML = conversations.map(conv => `
+            container.innerHTML = conversations.map(conv => `
         <div class="rop-conversation-item" data-conversation-id="${conv.id}">
             <div class="rop-conversation-avatar">
-                <img src="${conv.avatar}" alt="${conv.name}" class="rop-avatar-img">
+                <img src="${conv.avatar || 'default-avatar.png'}" alt="${conv.name}" class="rop-avatar-img">
                 <span class="rop-status-dot ${conv.online ? 'online' : 'offline'}"></span>
             </div>
             <div class="rop-conversation-info">
                 <div class="rop-conversation-header">
                     <span class="rop-conversation-name">${conv.name}</span>
-                    <span class="rop-conversation-time">${conv.time}</span>
+                    <span class="rop-conversation-time">${conv.time || ''}</span>
                 </div>
                 <div class="rop-conversation-preview">
-                    <span class="rop-last-message">${conv.last_message}</span>
+                    <span class="rop-last-message">${conv.last_message || 'Brak wiadomości'}</span>
                     ${conv.unread ? `<span class="rop-unread-badge">${conv.unread}</span>` : ''}
                 </div>
             </div>
         </div>
     `).join('');
 
-            container.html(conversationsHTML);
-
-            // Bind click events
-            const self = this;
-            $('.rop-conversation-item').on('click', function () {
-                const convId = $(this).data('conversation-id');
-                const userName = $(this).find('.rop-conversation-name').text();
-                self.openConversation(convId, userName);
+            // Poprawne bindowanie eventów dla każdej konwersacji
+            container.querySelectorAll('.rop-conversation-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const convId = item.dataset.conversationId;
+                    const convName = item.querySelector('.rop-conversation-name').textContent;
+                    this.openConversation(convId, convName);
+                });
             });
+        },
+
+        openNewConversationDialog() {
+            console.log('Opening new conversation dialog');
+
         },
 
         openConversation: function (conversationId, userName) {
@@ -505,16 +522,26 @@
 
         // Zaktualizuj również handleMessageData żeby obsługiwać wyszukiwanie
         handleMessageData: function (data) {
+            console.log('🔵 WebSocket message received:', data); // Debug
+
             switch (data.type) {
                 case 'auth_success':
+                    console.log('✅ Authentication successful, user ID:', data.user_id);
                     this.currentUserId = data.user_id;
-                    console.log('Authenticated as user:', this.currentUserId);
                     this.loadConversations();
                     break;
                 case 'conversations_list':
-                    this.displayConversations(data.conversations);
+                    console.log('📋 Conversations received:', data.conversations);
+                    if (data.conversations && data.conversations.length > 0) {
+                        this.displayConversations(data.conversations);
+                    } else {
+                        console.log('⚠️ No conversations found');
+                        this.displayConversations([]);
+                    }
                     break;
                 case 'messages_history':
+                case 'messages_list':
+                    console.log('💬 Messages received:', data.messages);
                     this.displayMessages(data.messages);
                     break;
                 case 'new_message':

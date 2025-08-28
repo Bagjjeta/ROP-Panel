@@ -259,3 +259,12 @@ class RopMessagesPanel {
 
 // Udostępnij klasę globalnie
 window.RopMessagesPanel = RopMessagesPanel;
+
+// Na końcu pliku lub w document.ready
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof RopMessagesPanel !== 'undefined') {
+        window.messagesPanel = new RopMessagesPanel({
+            embedded: true
+        });
+    }
+});
