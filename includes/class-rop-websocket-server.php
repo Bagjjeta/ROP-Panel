@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-require_once __DIR__ . 'C:/xampp/htdocs/ROP/wordpress/wp-load.php';
+require_once __DIR__ . '/../../../wp-load.php';
 
 use Ratchet\Server\IoServer;
 use Ratchet\Http\HttpServer;
