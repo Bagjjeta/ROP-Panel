@@ -25,7 +25,7 @@ class RopMessagesPanel {
 
     connectWebSocket() {
         this.ws = new WebSocket('ws://localhost:8080');
-        
+
         this.ws.onopen = () => {
             console.log('WebSocket connected');
             this.authenticate();
@@ -54,8 +54,8 @@ class RopMessagesPanel {
         const statusIndicator = document.querySelector('.rop-connection-status');
         if (statusIndicator) {
             statusIndicator.className = `rop-connection-status ${status}`;
-            statusIndicator.textContent = status === 'connected' ? 'Połączono' : 
-                                        status === 'error' ? 'Błąd połączenia' : 'Rozłączono';
+            statusIndicator.textContent = status === 'connected' ? 'Połączono' :
+                status === 'error' ? 'Błąd połączenia' : 'Rozłączono';
         }
     }
 
@@ -115,7 +115,7 @@ class RopMessagesPanel {
     }
 
     handleMessage(data) {
-        switch(data.type) {
+        switch (data.type) {
             case 'auth_success':
                 this.currentUserId = data.user_id;
                 this.loadConversations();
@@ -148,49 +148,64 @@ class RopMessagesPanel {
 
         if (conversations.length === 0) {
             container.innerHTML = `
-                <div class="rop-no-conversations">
-                    <i class="dashicons dashicons-format-chat"></i>
-                    <p>Brak konwersacji</p>
-                    <button class="rop-btn-primary" onclick="this.openNewConversationDialog()">
-                        Rozpocznij nową konwersację
-                    </button>
-                </div>
-            `;
+            <div class="rop-no-conversations">
+                <i class="dashicons dashicons-format-chat"></i>
+                <p>Brak konwersacji</p>
+                <button class="rop-btn-primary" id="rop-new-conversation-btn">
+                    Rozpocznij nową konwersację
+                </button>
+            </div>
+        `;
+
+            // Binduj event dla nowego przycisku
+            const newBtn = document.getElementById('rop-new-conversation-btn');
+            if (newBtn) {
+                newBtn.addEventListener('click', () => this.openNewConversationDialog());
+            }
             return;
         }
 
         container.innerHTML = conversations.map(conv => `
-            <div class="rop-conversation-item" data-conversation-id="${conv.id}" onclick="this.openConversation(${conv.id}, '${conv.name}')">
-                <div class="rop-conversation-avatar">
-                    <img src="${conv.avatar}" alt="${conv.name}" class="rop-avatar-img">
-                    <span class="rop-status-dot ${conv.online ? 'online' : 'offline'}"></span>
+        <div class="rop-conversation-item" data-conversation-id="${conv.id}">
+            <div class="rop-conversation-avatar">
+                <img src="${conv.avatar}" alt="${conv.name}" class="rop-avatar-img">
+                <span class="rop-status-dot ${conv.online ? 'online' : 'offline'}"></span>
+            </div>
+            <div class="rop-conversation-info">
+                <div class="rop-conversation-header">
+                    <span class="rop-conversation-name">${conv.name}</span>
+                    <span class="rop-conversation-time">${conv.time}</span>
                 </div>
-                <div class="rop-conversation-info">
-                    <div class="rop-conversation-header">
-                        <span class="rop-conversation-name">${conv.name}</span>
-                        <span class="rop-conversation-time">${conv.time}</span>
-                    </div>
-                    <div class="rop-conversation-preview">
-                        <span class="rop-last-message">${conv.last_message}</span>
-                        ${conv.unread ? `<span class="rop-unread-badge">${conv.unread}</span>` : ''}
-                    </div>
+                <div class="rop-conversation-preview">
+                    <span class="rop-last-message">${conv.last_message}</span>
+                    ${conv.unread ? `<span class="rop-unread-badge">${conv.unread}</span>` : ''}
                 </div>
             </div>
-        `).join('');
+        </div>
+    `).join('');
+
+        // Binduj eventy dla elementów konwersacji
+        container.querySelectorAll('.rop-conversation-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const convId = item.dataset.conversationId;
+                const convName = item.querySelector('.rop-conversation-name').textContent;
+                this.openConversation(convId, convName);
+            });
+        });
     }
 
     openConversation(conversationId, userName) {
         this.activeConversation = conversationId;
-        
+
         // Pokaż header chatu
         const chatHeader = document.getElementById('rop-chat-header');
         const messageInputArea = document.getElementById('rop-message-input-area');
         const welcomeMessage = document.querySelector('.rop-welcome-message');
-        
+
         if (chatHeader) chatHeader.style.display = 'flex';
         if (messageInputArea) messageInputArea.style.display = 'block';
         if (welcomeMessage) welcomeMessage.style.display = 'none';
-        
+
         // Ustaw informacje użytkownika
         const usernameEl = document.getElementById('rop-chat-username');
         if (usernameEl) usernameEl.textContent = userName;

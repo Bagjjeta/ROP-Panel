@@ -225,12 +225,15 @@
         },
 
         handleMessageData: function (data) {
+            console.log('Received WebSocket message:', data);
             switch (data.type) {
                 case 'auth_success':
+                    console.log('Auth success, loading conversations...');
                     this.currentUserId = data.user_id;
                     this.loadConversations();
                     break;
                 case 'conversations_list':
+                    console.log('Conversations received:', data.conversations);
                     this.displayConversations(data.conversations);
                     break;
                 case 'messages_history':
