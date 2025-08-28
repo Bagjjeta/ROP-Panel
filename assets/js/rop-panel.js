@@ -72,16 +72,264 @@
             var self = this;
             this.setActiveTab('messages');
 
-            $(document).on('click', '#rop-messages', function (e) {
-                e.preventDefault();
-                $('#panel-container').hide();
-                $('#messages-rop').show();
-                console.log('Przełączono na wiadomości');
+            // Załaduj customowy panel wiadomości w #panel-container
+            $('#panel-container').show();
+            $('#messages-rop').hide();
+
+            console.log('Przełączono na customowy panel wiadomości');
+            self.loadCustomMessagesPanel();
+        },
+
+        loadCustomMessagesPanel: function () {
+            const panelContainer = $('#panel-container');
+
+            // Wyczyść kontener
+            panelContainer.empty();
+
+            // Dodaj HTML panelu wiadomości
+            const messagesHTML = `
+        <div id="rop-custom-messages-panel" class="rop-custom-messages-wrapper">
+            <div class="rop-messages-header">
+                <h3>Wiadomości</h3>
+                <div class="rop-header-controls">
+                    <button id="rop-refresh-messages" class="rop-btn-secondary">
+                        <i class="dashicons dashicons-update"></i> Odśwież
+                    </button>
+                    <div class="rop-connection-status">Łączenie...</div>
+                </div>
+            </div>
+            <div class="rop-messages-layout">
+                <div class="rop-conversations-sidebar">
+                    <div class="rop-search-section">
+                        <input type="text" id="rop-user-search" placeholder="Szukaj użytkowników..." class="rop-search-input">
+                        <button id="rop-new-conversation" class="rop-btn-primary">
+                            <i class="dashicons dashicons-plus"></i> Nowa konwersacja
+                        </button>
+                    </div>
+                    <div id="rop-conversations-list" class="rop-conversations-container">
+                        <div class="rop-loading-conversations">Ładowanie konwersacji...</div>
+                    </div>
+                </div>
+                <div class="rop-chat-main">
+                    <div id="rop-chat-header" class="rop-chat-header" style="display: none;">
+                        <div class="rop-chat-user-info">
+                            <img id="rop-chat-avatar" src="" alt="" class="rop-chat-user-avatar">
+                            <div class="rop-chat-user-details">
+                                <span id="rop-chat-username" class="rop-chat-user-name"></span>
+                                <span id="rop-user-status" class="rop-user-status-indicator"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="rop-messages-container" class="rop-messages-area">
+                        <div class="rop-welcome-message">
+                            <i class="dashicons dashicons-format-chat"></i>
+                            <h4>Wybierz konwersację</h4>
+                            <p>Kliknij na konwersację z lewej strony, aby rozpocząć czat</p>
+                        </div>
+                    </div>
+                    <div id="rop-typing-indicator" class="rop-typing-indicator" style="display: none;"></div>
+                    <div id="rop-message-input-area" class="rop-message-input-section" style="display: none;">
+                        <div class="rop-message-input-wrapper">
+                            <textarea id="rop-message-text" placeholder="Napisz wiadomość..." class="rop-message-textarea"></textarea>
+                            <div class="rop-message-actions">
+                                <button id="rop-send-message" class="rop-btn-send">
+                                    <i class="dashicons dashicons-paperplane"></i> Wyślij
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+            panelContainer.html(messagesHTML);
+
+            // Inicjalizuj WebSocket bezpośrednio tutaj
+            this.initWebSocketForMessages();
+        },
+
+        initWebSocketForMessages: function () {
+            // Inicjalizuj WebSocket bezpośrednio bez ładowania dodatkowego pliku
+            this.messagesWS = new WebSocket('ws://localhost:8080');
+
+            this.messagesWS.onopen = () => {
+                console.log('Messages WebSocket connected');
+                this.updateConnectionStatus('connected');
+                this.authenticateMessages();
+            };
+
+            this.messagesWS.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                this.handleMessageData(data);
+            };
+
+            this.messagesWS.onclose = () => {
+                console.log('Messages WebSocket disconnected');
+                this.updateConnectionStatus('disconnected');
+                setTimeout(() => this.initWebSocketForMessages(), 3000);
+            };
+
+            this.messagesWS.onerror = (error) => {
+                console.error('Messages WebSocket error:', error);
+                this.updateConnectionStatus('error');
+            };
+
+            // Bind events dla panelu wiadomości
+            this.bindMessagesEvents();
+        },
+
+        updateConnectionStatus: function (status) {
+            const statusEl = document.querySelector('.rop-connection-status');
+            if (statusEl) {
+                statusEl.className = `rop-connection-status ${status}`;
+                statusEl.textContent = status === 'connected' ? 'Połączono' :
+                    status === 'error' ? 'Błąd połączenia' : 'Rozłączono';
+            }
+        },
+
+        authenticateMessages: function () {
+            if (this.messagesWS && this.messagesWS.readyState === WebSocket.OPEN) {
+                this.messagesWS.send(JSON.stringify({
+                    type: 'auth',
+                    token: rop_panel_ajax.nonce
+                }));
+            }
+        },
+
+        bindMessagesEvents: function () {
+            const self = this;
+
+            // Send message
+            $(document).on('click', '#rop-send-message', function () {
+                self.sendMessage();
             });
 
+            // Enter to send
+            $(document).on('keypress', '#rop-message-text', function (e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    self.sendMessage();
+                }
+            });
 
+            // Search users
+            $(document).on('input', '#rop-user-search', function () {
+                self.searchUsers($(this).val());
+            });
 
-            console.log('Messages panel loaded with [better_messages] shortcode');
+            // Refresh
+            $(document).on('click', '#rop-refresh-messages', function () {
+                self.loadConversations();
+            });
+        },
+
+        handleMessageData: function (data) {
+            switch (data.type) {
+                case 'auth_success':
+                    this.currentUserId = data.user_id;
+                    this.loadConversations();
+                    break;
+                case 'conversations_list':
+                    this.displayConversations(data.conversations);
+                    break;
+                case 'messages_history':
+                    this.displayMessages(data.messages);
+                    break;
+                case 'new_message':
+                    this.handleNewMessage(data);
+                    break;
+            }
+        },
+
+        sendMessage: function () {
+            const messageText = $('#rop-message-text').val().trim();
+            if (!messageText || !this.activeConversation) return;
+
+            if (this.messagesWS && this.messagesWS.readyState === WebSocket.OPEN) {
+                this.messagesWS.send(JSON.stringify({
+                    type: 'send_message',
+                    conversation_id: this.activeConversation,
+                    message: messageText
+                }));
+
+                $('#rop-message-text').val('');
+            }
+        },
+
+        loadConversations: function () {
+            if (this.messagesWS && this.messagesWS.readyState === WebSocket.OPEN) {
+                this.messagesWS.send(JSON.stringify({
+                    type: 'get_conversations'
+                }));
+            }
+        },
+
+        displayConversations: function (conversations) {
+            const container = $('#rop-conversations-list');
+
+            if (conversations.length === 0) {
+                container.html(`
+            <div class="rop-no-conversations">
+                <i class="dashicons dashicons-format-chat"></i>
+                <p>Brak konwersacji</p>
+            </div>
+        `);
+                return;
+            }
+
+            const conversationsHTML = conversations.map(conv => `
+        <div class="rop-conversation-item" data-conversation-id="${conv.id}">
+            <div class="rop-conversation-avatar">
+                <img src="${conv.avatar}" alt="${conv.name}" class="rop-avatar-img">
+                <span class="rop-status-dot ${conv.online ? 'online' : 'offline'}"></span>
+            </div>
+            <div class="rop-conversation-info">
+                <div class="rop-conversation-header">
+                    <span class="rop-conversation-name">${conv.name}</span>
+                    <span class="rop-conversation-time">${conv.time}</span>
+                </div>
+                <div class="rop-conversation-preview">
+                    <span class="rop-last-message">${conv.last_message}</span>
+                    ${conv.unread ? `<span class="rop-unread-badge">${conv.unread}</span>` : ''}
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+            container.html(conversationsHTML);
+
+            // Bind click events
+            const self = this;
+            $('.rop-conversation-item').on('click', function () {
+                const convId = $(this).data('conversation-id');
+                const userName = $(this).find('.rop-conversation-name').text();
+                self.openConversation(convId, userName);
+            });
+        },
+
+        openConversation: function (conversationId, userName) {
+            this.activeConversation = conversationId;
+
+            // Pokaż header chatu i input
+            $('#rop-chat-header').show();
+            $('#rop-message-input-area').show();
+            $('.rop-welcome-message').hide();
+
+            // Ustaw nazwę użytkownika
+            $('#rop-chat-username').text(userName);
+
+            // Oznacz aktywną konwersację
+            $('.rop-conversation-item').removeClass('active');
+            $(`.rop-conversation-item[data-conversation-id="${conversationId}"]`).addClass('active');
+
+            // Pobierz wiadomości
+            if (this.messagesWS && this.messagesWS.readyState === WebSocket.OPEN) {
+                this.messagesWS.send(JSON.stringify({
+                    type: 'get_messages',
+                    conversation_id: conversationId
+                }));
+            }
         },
 
 
@@ -97,11 +345,11 @@
                 $('#messages-rop').hide();
             } else if (tabName === 'messages') {
                 $('#rop-messages').addClass('active');
-                $('#panel-container').hide();
-                $('#messages-rop').show();
+                $('#panel-container').show();
+                //                 $('#messages-rop').show();
             }
         },
-        
+
         initMessagesPanel: function () {
             var self = this;
 

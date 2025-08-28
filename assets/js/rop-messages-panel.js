@@ -1,15 +1,26 @@
 class RopMessagesPanel {
-    constructor() {
+    constructor(options = {}) {
         this.ws = null;
         this.currentUserId = null;
         this.activeConversation = null;
+        this.container = options.container || 'body';
+        this.embedded = options.embedded || false;
         this.init();
     }
 
     init() {
         this.connectWebSocket();
-        this.setupUI();
+        if (!this.embedded) {
+            this.setupUI();
+        } else {
+            this.setupEmbeddedUI();
+        }
         this.bindEvents();
+    }
+
+    setupEmbeddedUI() {
+        // Panel już istnieje w kontenerze, tylko podpinamy eventy
+        console.log('Embedded messages panel initialized');
     }
 
     connectWebSocket() {
@@ -18,6 +29,7 @@ class RopMessagesPanel {
         this.ws.onopen = () => {
             console.log('WebSocket connected');
             this.authenticate();
+            this.showConnectionStatus('connected');
         };
 
         this.ws.onmessage = (event) => {
@@ -27,86 +39,79 @@ class RopMessagesPanel {
 
         this.ws.onclose = () => {
             console.log('WebSocket disconnected');
+            this.showConnectionStatus('disconnected');
             // Ponowne połączenie po 3 sekundach
             setTimeout(() => this.connectWebSocket(), 3000);
         };
+
+        this.ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+            this.showConnectionStatus('error');
+        };
     }
 
-    authenticate() {
-        // Pobierz token z WordPress
-        const token = rop_ajax.nonce; // lub inny token
-        this.ws.send(JSON.stringify({
-            type: 'auth',
-            token: token
-        }));
-    }
-
-    setupUI() {
-        const panelHTML = `
-            <div id="rop-messages-panel" class="rop-messages-panel">
-                <div class="rop-messages-header">
-                    <h3>Wiadomości</h3>
-                    <button id="rop-toggle-panel" class="rop-toggle-btn">−</button>
-                </div>
-                <div class="rop-messages-content">
-                    <div class="rop-conversations-list">
-                        <div class="rop-search-box">
-                            <input type="text" placeholder="Szukaj użytkowników..." id="rop-user-search">
-                        </div>
-                        <div id="rop-conversations"></div>
-                    </div>
-                    <div class="rop-chat-area">
-                        <div class="rop-chat-header">
-                            <span id="rop-chat-username">Wybierz konwersację</span>
-                            <span id="rop-user-status"></span>
-                        </div>
-                        <div id="rop-messages-container"></div>
-                        <div class="rop-typing-indicator" id="rop-typing"></div>
-                        <div class="rop-message-input">
-                            <textarea id="rop-message-text" placeholder="Napisz wiadomość..."></textarea>
-                            <button id="rop-send-message">Wyślij</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.insertAdjacentHTML('beforeend', panelHTML);
+    showConnectionStatus(status) {
+        const statusIndicator = document.querySelector('.rop-connection-status');
+        if (statusIndicator) {
+            statusIndicator.className = `rop-connection-status ${status}`;
+            statusIndicator.textContent = status === 'connected' ? 'Połączono' : 
+                                        status === 'error' ? 'Błąd połączenia' : 'Rozłączono';
+        }
     }
 
     bindEvents() {
-        // Toggle panel
-        document.getElementById('rop-toggle-panel').addEventListener('click', () => {
-            this.togglePanel();
-        });
-
         // Send message
-        document.getElementById('rop-send-message').addEventListener('click', () => {
-            this.sendMessage();
-        });
+        const sendBtn = document.getElementById('rop-send-message');
+        if (sendBtn) {
+            sendBtn.addEventListener('click', () => {
+                this.sendMessage();
+            });
+        }
 
         // Enter to send
-        document.getElementById('rop-message-text').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                this.sendMessage();
-            }
-        });
+        const messageInput = document.getElementById('rop-message-text');
+        if (messageInput) {
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    this.sendMessage();
+                }
+            });
 
-        // Typing indicators
-        let typingTimer;
-        document.getElementById('rop-message-text').addEventListener('input', () => {
-            this.sendTypingStart();
-            clearTimeout(typingTimer);
-            typingTimer = setTimeout(() => {
-                this.sendTypingStop();
-            }, 1000);
-        });
+            // Typing indicators
+            let typingTimer;
+            messageInput.addEventListener('input', () => {
+                this.sendTypingStart();
+                clearTimeout(typingTimer);
+                typingTimer = setTimeout(() => {
+                    this.sendTypingStop();
+                }, 1000);
+            });
+        }
 
         // Search users
-        document.getElementById('rop-user-search').addEventListener('input', (e) => {
-            this.searchUsers(e.target.value);
-        });
+        const searchInput = document.getElementById('rop-user-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.searchUsers(e.target.value);
+            });
+        }
+
+        // Refresh messages
+        const refreshBtn = document.getElementById('rop-refresh-messages');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                this.loadConversations();
+            });
+        }
+
+        // New conversation
+        const newConvBtn = document.getElementById('rop-new-conversation');
+        if (newConvBtn) {
+            newConvBtn.addEventListener('click', () => {
+                this.openNewConversationDialog();
+            });
+        }
     }
 
     handleMessage(data) {
@@ -116,7 +121,7 @@ class RopMessagesPanel {
                 this.loadConversations();
                 break;
             case 'new_message':
-                this.displayMessage(data.message);
+                this.displayNewMessage(data.message);
                 this.updateConversationsList();
                 break;
             case 'conversations_list':
@@ -137,6 +142,78 @@ class RopMessagesPanel {
         }
     }
 
+    displayConversations(conversations) {
+        const container = document.getElementById('rop-conversations-list');
+        if (!container) return;
+
+        if (conversations.length === 0) {
+            container.innerHTML = `
+                <div class="rop-no-conversations">
+                    <i class="dashicons dashicons-format-chat"></i>
+                    <p>Brak konwersacji</p>
+                    <button class="rop-btn-primary" onclick="this.openNewConversationDialog()">
+                        Rozpocznij nową konwersację
+                    </button>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = conversations.map(conv => `
+            <div class="rop-conversation-item" data-conversation-id="${conv.id}" onclick="this.openConversation(${conv.id}, '${conv.name}')">
+                <div class="rop-conversation-avatar">
+                    <img src="${conv.avatar}" alt="${conv.name}" class="rop-avatar-img">
+                    <span class="rop-status-dot ${conv.online ? 'online' : 'offline'}"></span>
+                </div>
+                <div class="rop-conversation-info">
+                    <div class="rop-conversation-header">
+                        <span class="rop-conversation-name">${conv.name}</span>
+                        <span class="rop-conversation-time">${conv.time}</span>
+                    </div>
+                    <div class="rop-conversation-preview">
+                        <span class="rop-last-message">${conv.last_message}</span>
+                        ${conv.unread ? `<span class="rop-unread-badge">${conv.unread}</span>` : ''}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    openConversation(conversationId, userName) {
+        this.activeConversation = conversationId;
+        
+        // Pokaż header chatu
+        const chatHeader = document.getElementById('rop-chat-header');
+        const messageInputArea = document.getElementById('rop-message-input-area');
+        const welcomeMessage = document.querySelector('.rop-welcome-message');
+        
+        if (chatHeader) chatHeader.style.display = 'flex';
+        if (messageInputArea) messageInputArea.style.display = 'block';
+        if (welcomeMessage) welcomeMessage.style.display = 'none';
+        
+        // Ustaw informacje użytkownika
+        const usernameEl = document.getElementById('rop-chat-username');
+        if (usernameEl) usernameEl.textContent = userName;
+
+        // Pobierz historię wiadomości
+        this.ws.send(JSON.stringify({
+            type: 'get_messages',
+            conversation_id: conversationId
+        }));
+
+        // Oznacz jako przeczytane
+        this.ws.send(JSON.stringify({
+            type: 'mark_read',
+            conversation_id: conversationId
+        }));
+
+        // Oznacz aktywną konwersację
+        document.querySelectorAll('.rop-conversation-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        document.querySelector(`[data-conversation-id="${conversationId}"]`).classList.add('active');
+    }
+
     sendMessage() {
         const messageText = document.getElementById('rop-message-text').value.trim();
         if (!messageText || !this.activeConversation) return;
@@ -150,63 +227,20 @@ class RopMessagesPanel {
         document.getElementById('rop-message-text').value = '';
     }
 
+    authenticate() {
+        const token = rop_ajax.nonce;
+        this.ws.send(JSON.stringify({
+            type: 'auth',
+            token: token
+        }));
+    }
+
     loadConversations() {
         this.ws.send(JSON.stringify({
             type: 'get_conversations'
         }));
     }
-
-    displayConversations(conversations) {
-        const container = document.getElementById('rop-conversations');
-        container.innerHTML = '';
-
-        conversations.forEach(conv => {
-            const convElement = document.createElement('div');
-            convElement.className = 'rop-conversation-item';
-            convElement.innerHTML = `
-                <div class="rop-avatar">
-                    <img src="${conv.avatar}" alt="${conv.name}">
-                    <span class="rop-status ${conv.online ? 'online' : 'offline'}"></span>
-                </div>
-                <div class="rop-conv-info">
-                    <div class="rop-conv-name">${conv.name}</div>
-                    <div class="rop-last-message">${conv.last_message}</div>
-                </div>
-                <div class="rop-conv-meta">
-                    <span class="rop-time">${conv.time}</span>
-                    ${conv.unread ? `<span class="rop-unread">${conv.unread}</span>` : ''}
-                </div>
-            `;
-
-            convElement.addEventListener('click', () => {
-                this.openConversation(conv.id, conv.name);
-            });
-
-            container.appendChild(convElement);
-        });
-    }
-
-    openConversation(conversationId, userName) {
-        this.activeConversation = conversationId;
-        document.getElementById('rop-chat-username').textContent = userName;
-
-        // Pobierz historię wiadomości
-        this.ws.send(JSON.stringify({
-            type: 'get_messages',
-            conversation_id: conversationId
-        }));
-
-        // Oznacz jako przeczytane
-        this.ws.send(JSON.stringify({
-            type: 'mark_read',
-            conversation_id: conversationId
-        }));
-    }
 }
 
-// Inicjalizacja panelu po załadowaniu strony
-document.addEventListener('DOMContentLoaded', () => {
-    if (typeof rop_ajax !== 'undefined') {
-        new RopMessagesPanel();
-    }
-});
+// Udostępnij klasę globalnie
+window.RopMessagesPanel = RopMessagesPanel;

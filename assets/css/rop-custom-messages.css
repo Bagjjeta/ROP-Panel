@@ -1,0 +1,257 @@
+.rop-custom-messages-wrapper {
+    height: 600px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.rop-messages-header {
+    background: #0073aa;
+    color: white;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.rop-messages-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.rop-connection-status {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.2);
+}
+
+.rop-connection-status.connected {
+    background: #4caf50;
+}
+
+.rop-connection-status.error {
+    background: #f44336;
+}
+
+.rop-messages-layout {
+    display: flex;
+    height: calc(100% - 60px);
+}
+
+.rop-conversations-sidebar {
+    width: 320px;
+    border-right: 1px solid #eee;
+    background: #f8f9fa;
+}
+
+.rop-search-section {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.rop-search-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.rop-btn-primary {
+    background: #0073aa;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    width: 100%;
+}
+
+.rop-conversation-item {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background 0.2s;
+}
+
+.rop-conversation-item:hover,
+.rop-conversation-item.active {
+    background: #e3f2fd;
+}
+
+.rop-conversation-avatar {
+    position: relative;
+    margin-right: 12px;
+}
+
+.rop-avatar-img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.rop-status-dot {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+.rop-status-dot.online {
+    background: #4caf50;
+}
+
+.rop-status-dot.offline {
+    background: #999;
+}
+
+.rop-conversation-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.rop-conversation-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.rop-conversation-name {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.rop-conversation-time {
+    font-size: 11px;
+    color: #999;
+}
+
+.rop-last-message {
+    font-size: 12px;
+    color: #666;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.rop-unread-badge {
+    background: #dc3232;
+    color: white;
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: 10px;
+    margin-left: 8px;
+}
+
+.rop-chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.rop-chat-header {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    background: #fafafa;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.rop-chat-user-info {
+    display: flex;
+    align-items: center;
+}
+
+.rop-chat-user-avatar {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.rop-chat-user-name {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.rop-messages-area {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background: #f5f5f5;
+}
+
+.rop-welcome-message {
+    text-align: center;
+    color: #666;
+    margin-top: 100px;
+}
+
+.rop-welcome-message i {
+    font-size: 48px;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.rop-message-input-section {
+    padding: 15px;
+    border-top: 1px solid #eee;
+    background: white;
+}
+
+.rop-message-input-wrapper {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+}
+
+.rop-message-textarea {
+    flex: 1;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    resize: none;
+    min-height: 40px;
+    max-height: 120px;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+.rop-btn-send {
+    background: #0073aa;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.rop-btn-send:hover {
+    background: #005a87;
+}
+
+.rop-no-conversations {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.rop-no-conversations i {
+    font-size: 32px;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
