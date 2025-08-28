@@ -4,7 +4,7 @@
  * Plugin URI: http://localhost/ROP/wordpress
  * Description: Panel ROP
  * Version: 2.1.0
- * Author: ROP
+ * Author: ROP WS
  * Text Domain: rop_panel
  * Domain Path: /languages
  * Requires at least: 5.0
