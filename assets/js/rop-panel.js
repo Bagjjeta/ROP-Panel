@@ -332,6 +332,282 @@
             }
         },
 
+        // Dodaj te funkcje do obiektu RopPanel
+
+        searchUsers: function (searchTerm) {
+            if (!searchTerm || searchTerm.length < 2) {
+                // Jeśli brak wyszukiwanego terminu, pokaż wszystkie konwersacje
+                this.loadConversations();
+                return;
+            }
+
+            // Wyślij zapytanie o wyszukanie użytkowników
+            if (this.messagesWS && this.messagesWS.readyState === WebSocket.OPEN) {
+                this.messagesWS.send(JSON.stringify({
+                    type: 'search_users',
+                    query: searchTerm
+                }));
+            }
+        },
+
+        displayMessages: function (messages) {
+            const container = $('#rop-messages-container');
+
+            if (!messages || messages.length === 0) {
+                container.html(`
+            <div class="rop-no-messages">
+                <i class="dashicons dashicons-format-chat"></i>
+                <p>Brak wiadomości w tej konwersacji</p>
+            </div>
+        `);
+                return;
+            }
+
+            const messagesHTML = messages.map(msg => `
+        <div class="rop-message ${msg.sender_id == this.currentUserId ? 'rop-message-own' : 'rop-message-other'}">
+            <div class="rop-message-avatar">
+                <img src="${msg.sender_avatar}" alt="${msg.sender_name}" class="rop-msg-avatar">
+            </div>
+            <div class="rop-message-content">
+                <div class="rop-message-header">
+                    <span class="rop-message-sender">${msg.sender_name}</span>
+                    <span class="rop-message-time">${this.formatMessageTime(msg.sent_at)}</span>
+                </div>
+                <div class="rop-message-text">${this.formatMessageText(msg.message)}</div>
+            </div>
+        </div>
+    `).join('');
+
+            container.html(messagesHTML);
+            this.scrollToBottom();
+        },
+
+        handleNewMessage: function (data) {
+            // Jeśli wiadomość jest z aktualnej konwersacji, dodaj ją do widoku
+            if (data.conversation_id === this.activeConversation) {
+                const container = $('#rop-messages-container');
+                const messageHTML = `
+            <div class="rop-message ${data.sender_id == this.currentUserId ? 'rop-message-own' : 'rop-message-other'}">
+                <div class="rop-message-avatar">
+                    <img src="${data.sender_avatar}" alt="${data.sender_name}" class="rop-msg-avatar">
+                </div>
+                <div class="rop-message-content">
+                    <div class="rop-message-header">
+                        <span class="rop-message-sender">${data.sender_name}</span>
+                        <span class="rop-message-time">${this.formatMessageTime(data.timestamp)}</span>
+                    </div>
+                    <div class="rop-message-text">${this.formatMessageText(data.message)}</div>
+                </div>
+            </div>
+        `;
+
+                // Usuń "brak wiadomości" jeśli istnieje
+                container.find('.rop-no-messages').remove();
+                container.append(messageHTML);
+                this.scrollToBottom();
+            }
+
+            // Aktualizuj listę konwersacji (pokaż nową wiadomość)
+            this.loadConversations();
+
+            // Pokaż powiadomienie jeśli nie jest to nasza wiadomość i nie jest z aktualnej konwersacji
+            if (data.sender_id != this.currentUserId && data.conversation_id !== this.activeConversation) {
+                this.showNotification(data.sender_name, data.message);
+            }
+        },
+
+        formatMessageTime: function (timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+
+            if (diff < 60000) { // mniej niż minuta
+                return 'teraz';
+            } else if (diff < 3600000) { // mniej niż godzina
+                return `${Math.floor(diff / 60000)} min temu`;
+            } else if (diff < 86400000) { // mniej niż dzień
+                const hours = Math.floor(diff / 3600000);
+                return `${hours} godz temu`;
+            } else {
+                return date.toLocaleDateString('pl-PL', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+        },
+
+        formatMessageText: function (text) {
+            // Podstawowe formatowanie tekstu - escape HTML i zamiana nowych linii
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;')
+                .replace(/\n/g, '<br>');
+        },
+
+        scrollToBottom: function () {
+            const container = $('#rop-messages-container');
+            if (container.length) {
+                container.scrollTop(container[0].scrollHeight);
+            }
+        },
+
+        showNotification: function (senderName, message) {
+            // Sprawdź czy przeglądarki obsługuje powiadomienia
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(`Nowa wiadomość od ${senderName}`, {
+                    body: message.length > 50 ? message.substring(0, 50) + '...' : message,
+                    icon: '/wp-content/plugins/rop-panel/assets/img/notification-icon.png'
+                });
+            } else if ('Notification' in window && Notification.permission !== 'denied') {
+                // Poproś o pozwolenie
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        this.showNotification(senderName, message);
+                    }
+                });
+            }
+
+            // Pokaż również powiadomienie w UI
+            this.showUINotification(`Nowa wiadomość od ${senderName}`);
+        },
+
+        showUINotification: function (message) {
+            // Utwórz powiadomienie w UI
+            const notification = $(`
+        <div class="rop-ui-notification">
+            <i class="dashicons dashicons-format-chat"></i>
+            <span>${message}</span>
+            <button class="rop-notification-close">&times;</button>
+        </div>
+    `);
+
+            $('body').append(notification);
+
+            // Auto hide po 5 sekundach
+            setTimeout(() => {
+                notification.fadeOut(() => notification.remove());
+            }, 5000);
+
+            // Bind close button
+            notification.find('.rop-notification-close').on('click', function () {
+                notification.fadeOut(() => notification.remove());
+            });
+        },
+
+        // Zaktualizuj również handleMessageData żeby obsługiwać wyszukiwanie
+        handleMessageData: function (data) {
+            switch (data.type) {
+                case 'auth_success':
+                    this.currentUserId = data.user_id;
+                    console.log('Authenticated as user:', this.currentUserId);
+                    this.loadConversations();
+                    break;
+                case 'conversations_list':
+                    this.displayConversations(data.conversations);
+                    break;
+                case 'messages_history':
+                    this.displayMessages(data.messages);
+                    break;
+                case 'new_message':
+                    this.handleNewMessage(data);
+                    break;
+                case 'search_results':
+                    this.displaySearchResults(data.users);
+                    break;
+                case 'typing_start':
+                    this.showTypingIndicator(data);
+                    break;
+                case 'typing_stop':
+                    this.hideTypingIndicator(data);
+                    break;
+                case 'user_status':
+                    this.updateUserStatus(data);
+                    break;
+                default:
+                    console.log('Unhandled message type:', data.type);
+            }
+        },
+
+        displaySearchResults: function (users) {
+            const container = $('#rop-conversations-list');
+
+            if (!users || users.length === 0) {
+                container.html(`
+            <div class="rop-no-results">
+                <i class="dashicons dashicons-search"></i>
+                <p>Brak wyników wyszukiwania</p>
+            </div>
+        `);
+                return;
+            }
+
+            const usersHTML = users.map(user => `
+        <div class="rop-user-search-item" data-user-id="${user.id}">
+            <div class="rop-conversation-avatar">
+                <img src="${user.avatar}" alt="${user.name}" class="rop-avatar-img">
+                <span class="rop-status-dot ${user.online ? 'online' : 'offline'}"></span>
+            </div>
+            <div class="rop-conversation-info">
+                <div class="rop-conversation-header">
+                    <span class="rop-conversation-name">${user.name}</span>
+                </div>
+                <div class="rop-conversation-preview">
+                    <span class="rop-last-message">Kliknij aby rozpocząć konwersację</span>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+            container.html(usersHTML);
+
+            // Bind click events dla wyszukanych użytkowników
+            const self = this;
+            $('.rop-user-search-item').on('click', function () {
+                const userId = $(this).data('user-id');
+                const userName = $(this).find('.rop-conversation-name').text();
+                self.startNewConversation(userId, userName);
+            });
+        },
+
+        startNewConversation: function (userId, userName) {
+            // Rozpocznij nową konwersację z użytkownikiem
+            if (this.messagesWS && this.messagesWS.readyState === WebSocket.OPEN) {
+                this.messagesWS.send(JSON.stringify({
+                    type: 'start_conversation',
+                    recipient_id: userId
+                }));
+            }
+
+            // Tymczasowo otwórz konwersację (może być potrzebne ID z serwera)
+            this.openConversation(null, userName);
+            this.tempRecipientId = userId; // Tymczasowe rozwiązanie
+        },
+
+        showTypingIndicator: function (data) {
+            if (data.conversation_id === this.activeConversation && data.user_id !== this.currentUserId) {
+                const indicator = $('#rop-typing-indicator');
+                indicator.text(`${data.user_name} pisze...`).show();
+            }
+        },
+
+        hideTypingIndicator: function (data) {
+            if (data.conversation_id === this.activeConversation) {
+                $('#rop-typing-indicator').hide();
+            }
+        },
+
+        updateUserStatus: function (data) {
+            // Aktualizuj status użytkownika w liście konwersacji
+            $(`.rop-conversation-item[data-user-id="${data.user_id}"] .rop-status-dot`)
+                .removeClass('online offline')
+                .addClass(data.status);
+        },
 
         setActiveTab: function (tabName) {
             $('.rop-tab').removeClass('active');

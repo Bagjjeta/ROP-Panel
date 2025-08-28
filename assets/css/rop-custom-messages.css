@@ -255,3 +255,106 @@
     margin-bottom: 15px;
     opacity: 0.5;
 }
+
+/* Dodaj te style do istniejącego pliku CSS */
+
+.rop-message {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-start;
+}
+
+.rop-message-own {
+    flex-direction: row-reverse;
+}
+
+.rop-message-avatar {
+    margin: 0 10px;
+}
+
+.rop-msg-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.rop-message-content {
+    max-width: 70%;
+    background: white;
+    border-radius: 12px;
+    padding: 10px 15px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.rop-message-own .rop-message-content {
+    background: #0073aa;
+    color: white;
+}
+
+.rop-message-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    font-size: 11px;
+    opacity: 0.7;
+}
+
+.rop-message-text {
+    font-size: 14px;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+.rop-typing-indicator {
+    padding: 10px 15px;
+    font-style: italic;
+    color: #666;
+    font-size: 12px;
+}
+
+.rop-ui-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #0073aa;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 300px;
+}
+
+.rop-notification-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.rop-no-messages,
+.rop-no-results {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.rop-user-search-item {
+    /* Same styles as conversation item */
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background 0.2s;
+}
+
+.rop-user-search-item:hover {
+    background: #e8f4f8;
+}
